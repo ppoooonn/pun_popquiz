@@ -1,0 +1,54 @@
+doctype html
+html(lang='en')
+	head
+		title Exam prepare
+		script.
+			var server = !{$script_vars};
+			server.offset = server.server_time-new Date()/1000;
+		include ../common.pug
+		script.
+			$(function(){
+				var ready = false;
+				$('#start_btn').click(function(){
+					ready = !ready;
+					$('#start_btn').toggleClass('active',ready);
+					update();
+				});
+				var update = function(){
+					var wait = server.start_time - (+new Date()/1000+server.offset);
+					if (wait > 0) {
+						if (ready){
+							$('#start_btn').text('Starting in '+(wait|0)+' seconds');
+							$('#timer').text('');
+						}else{
+							$('#start_btn').text('Ready');
+							$('#timer').text('Quiz will start in '+(wait|0)+' seconds'); // TODO: add moment.js
+						}
+						setTimeout(update,200);
+					} else {
+						if(ready)
+							window.location.replace("!{site_url('/exam/quiz')}");
+						else{
+							$('#start_btn').text('Start Quiz').addClass('active');
+							$('#timer').text('');
+						}
+					}
+				};
+				update();
+			});
+	body
+		nav.ui.fixed.inverted.navbar.menu
+			.left.menu
+				.item PopQuiz
+				.item= name
+			.right.menu
+				a.item(href=site_url('exam/logout')) Logout
+		main.ui.page.grid.container
+				.row
+					.column
+						br
+						h1.ui.header.quiz-title= $quiz_title
+						pre.instruction= $instruction
+						.field
+							button.ui.toggle.button#start_btn Ready
+							label#timer Loading...
