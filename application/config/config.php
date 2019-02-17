@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://'.($_SERVER['HTTP_HOST']??'localhost').'/popquiz';
+$config['base_url'] = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://").($_SERVER['HTTP_HOST']??'localhost');
 
 /*
 |--------------------------------------------------------------------------
