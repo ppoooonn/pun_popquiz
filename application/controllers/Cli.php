@@ -6,7 +6,7 @@ class Cli extends CI_Controller {
 		if(!is_cli())
 			show_404();
 	}
-	public function add_quiz($title, $enable=false, $problem_time=30, $shuffle=true, $instruction='', $start_time=0)) {
+	public function add_quiz($title, $enable=false, $problem_time=30, $shuffle=true, $instruction='', $start_time=0) {
 		$this->load->model('quiz');
 		echo $this->quiz->create($title, $enable, $problem_time, $shuffle, $instruction, $start_time);
 	}
