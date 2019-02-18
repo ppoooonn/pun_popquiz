@@ -13,3 +13,4 @@
 * PHP 7
 * MySQL / MariaDB
 * HTTP Server
+* Composer [When installing]

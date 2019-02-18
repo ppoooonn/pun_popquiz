@@ -1,0 +1,4 @@
+Production server:
+remove .htaccess, web.config
+set ci-environment
+enable cache
