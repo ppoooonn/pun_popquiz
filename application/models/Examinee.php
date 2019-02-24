@@ -28,7 +28,6 @@ class Examinee extends CI_Model {
 		for($i=0;$i<self::TOKEN_LENGTH;$i++){
 			$token .= self::TOKEN_CHARS[random_int(0,strlen(self::TOKEN_CHARS)-1)];
 		}
-		// $token = 'yyyy';
 		return $token;
 	}
 	public function create($quiz_id, $name, $token=NULL){

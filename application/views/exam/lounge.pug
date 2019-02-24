@@ -3,8 +3,8 @@ html(lang='en')
 	head
 		title Exam prepare
 		script.
-			var server = !{$script_vars};
-			server.offset = server.server_time-new Date()/1000;
+			var server = !{script_vars};
+			server.offset = server.server_time-Date.now()/1000;
 		include ../common.pug
 		script.
 			$(function(){
@@ -15,7 +15,7 @@ html(lang='en')
 					update();
 				});
 				var update = function(){
-					var wait = server.start_time - (+new Date()/1000+server.offset);
+					var wait = server.start_time - (Date.now()/1000+server.offset);
 					if (wait > 0) {
 						if (ready){
 							$('#start_btn').text('Starting in '+(wait|0)+' seconds');
@@ -40,15 +40,15 @@ html(lang='en')
 		nav.ui.fixed.inverted.navbar.menu
 			.left.menu
 				.item PopQuiz
-				.item= name
 			.right.menu
+				.item= name
 				a.item(href=site_url('exam/logout')) Logout
 		main.ui.page.grid.container
 				.row
+				.row
 					.column
-						br
-						h1.ui.header.quiz-title= $quiz_title
-						pre.instruction= $instruction
+						h1.ui.header.quiz-title= quiz_title
+						pre.instruction= instruction
 						.field
 							button.ui.toggle.button#start_btn Ready
 							label#timer Loading...

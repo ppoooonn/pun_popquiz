@@ -1,0 +1,128 @@
+doctype html
+html(lang='en')
+	head
+		title= problem.order +'/'+ problem.count +' - '+ quiz_title
+		include ../common.pug
+		style.
+			.ui.menu.fixed {
+				position: static;
+			}
+			#content, #loading {
+				display: flex;
+				flex-wrap: wrap;
+				margin-top: 2rem;
+				margin-bottom: 1rem;
+			}
+			#content {
+				display: none;
+			}
+			#content.show {
+				display: flex;
+			}
+			#loading .header {
+				width: 100%;
+			}
+			#loading.hide {
+				display: none;
+			}
+			#content .problem {
+				min-width: 20rem;
+				flex-basis: 80%;
+				flex-grow: 8;
+			}
+			#content .problem img, #large-img img {
+				max-width: 100%;
+			}
+			#large-img .content {
+				text-align: center;
+			}
+			img.zoom {
+				cursor: -webkit-zoom-in;
+				cursor: zoom-in;
+			}
+			#content .answer {
+				min-width: 10rem;
+				width: 10rem;
+				flex-grow: 2;
+			}
+			#content .answer label {
+				user-select: none;
+			}
+			.ui.fullscreen.modal {
+				left: 2.5% !important;
+			}
+		script.
+			var problem_timer = !{problem.timer};
+			$(function(){
+				var load_finish = function(){
+					if(--loading > 0)
+						return;
+					$('#loading').addClass('hide');
+					$('#content').addClass('show');
+					start_timer();
+				};
+				var start_timer = function(){
+					var end = Date.now()+1000*problem_timer;
+					var update = function(){
+						var t = Math.ceil((end - Date.now())/1000);
+						if(t<=0){
+							clearInterval(inv);
+							$('#timer').text('Timeout');
+							return;
+						}
+						var m = t/60|0;
+						var s = t%60;
+						if(s<10)s='0'+s;
+						$('#timer').text(m+':'+s);
+					};
+					var inv = setInterval(update, 500);
+					update();
+				};
+				$('img.zoom').click(function(){
+					$('#large-img').modal('show').modal('unbind scrollLock');
+				});
+				$('#large-img').click(function(){
+					$('#large-img').modal('hide');
+				});
+				$('.answer').on('change','input[name=choice]',function(){
+					if(!$(this).prop('checked'))
+						return;
+					$('.answer button[type=submit]').prop('disabled', false);
+				});
+				var imgs = $('.problem img, #large-img img');
+				var loading = imgs.length;
+				imgs.each(function(){
+					if (this.complete && this.naturalHeight !== 0){
+						load_finish();
+					} else
+						$(this).on('load', load_finish);
+				});
+			});
+	body
+		if problem.image_large
+			#large-img.ui.fullscreen.modal
+				.content
+					img.ui.img(src=problem.image_large)
+		nav.ui.fixed.inverted.navbar.menu
+			.left.menu
+				.item= quiz_title+' - '+problem.order +'/'+ problem.count
+			.right.menu
+				.item= name
+				a.item(href=site_url('exam/logout')) Logout
+		main.ui.page.container
+			#loading
+				h1.ui.center.aligned.header Loading...
+			#content
+				.problem
+					img.ui.img(src=problem.image, class=problem.image_large?'zoom':'')
+				.answer
+					.ui.segment
+						h2.ui.dividing.header#timer Answer
+						form.ui.form(action=current_url(), method='POST')
+							input(type='hidden',name='problem',value='1')
+							- for(var i=1; i<=problem.choice_count; i++)
+								.field
+									.ui.radio.checkbox
+										input(type='radio',name='choice',value=i)
+										label= i
+							button.ui.primary.button(type='submit',disabled) Submit

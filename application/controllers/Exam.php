@@ -38,6 +38,23 @@ class Exam extends CI_Controller {
 			'instruction' => $quiz->instruction,
 		]);
 	}
+	public function quiz() {
+		if($this->session->examinee_id === NULL)
+			redirect('/exam/login');
+		$this->view([
+			'name' => $this->session->name,
+			'quiz_title' => $this->session->quiz_title,
+			'problem' => [
+				'order' => 1,
+				'count' => 3,
+				'id' => '0010',
+				'choice_count' => 4,
+				'image' => base_url('static/img/test2.png'),
+				'image_large' => base_url('static/img/test2_l.png'),
+				'timer' => 30,
+			]
+		]);
+	}
 	public function logout() {
 		$this->session->sess_destroy();
 		redirect('/exam/login');
