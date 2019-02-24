@@ -56,7 +56,7 @@ html(lang='en')
 			$(function(){
 				var load_finish = function(){
 					if(--loading > 0)
-						return;
+						return true;
 					$('#loading').addClass('hide');
 					$('#content').addClass('show');
 					start_timer();
@@ -86,7 +86,7 @@ html(lang='en')
 				});
 				$('.answer').on('change','input[name=choice]',function(){
 					if(!$(this).prop('checked'))
-						return;
+						return true;
 					$('.answer button[type=submit]').prop('disabled', false);
 				});
 				var imgs = $('.problem img, #large-img img');
@@ -97,6 +97,7 @@ html(lang='en')
 					} else
 						$(this).on('load', load_finish);
 				});
+				$('.ui.checkbox').checkbox();
 			});
 	body
 		if problem.image_large
