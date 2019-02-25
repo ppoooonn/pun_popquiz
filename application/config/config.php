@@ -28,6 +28,9 @@ if (is_cli())
 else
 	$config['base_url'] = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://").($_SERVER['HTTP_HOST']);
 
+$config['data_path'] = APPPATH.'../data/';
+$config['salt'] = 'ileu5reuiwyfy34a';
+
 /*
 |--------------------------------------------------------------------------
 | Index File

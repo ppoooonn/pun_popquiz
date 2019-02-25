@@ -15,4 +15,14 @@ class Cli extends CI_Controller {
 		$this->load->model('examinee');
 		echo $this->examinee->create($quiz_id, $name, $token)?'Success':'Failed';
 	}
+
+	public function get_image_key($examinee_id, $problem_id) {
+		$this->load->model('problem');
+		print_r( site_url(['exam','image',$this->problem->image_hash($examinee_id, $problem_id),$problem_id]));
+	}
+
+	public function get_seen_problems($quiz_id, $examinee_id) {
+		$this->load->model('problem');
+		print_r( $this->problem->get_seen_problems($quiz_id, $examinee_id));
+	}
 }

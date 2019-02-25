@@ -120,7 +120,7 @@ html(lang='en')
 					.ui.segment
 						h2.ui.dividing.header#timer Answer
 						form.ui.form(action=current_url(), method='POST')
-							input(type='hidden',name='problem',value='1')
+							input(type='hidden',name='problem',value=problem.order)
 							- for(var i=1; i<=problem.choice_count; i++)
 								.field
 									.ui.radio.checkbox

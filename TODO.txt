@@ -2,3 +2,5 @@ Production server:
 remove .htaccess, web.config
 set ci-environment
 enable cache
+
+Make choice more noticable when time is running out
