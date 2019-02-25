@@ -82,7 +82,7 @@ class Exam extends CI_Controller {
 	}
 	public function image($key=NULL, $problem_id=NULL) {
 		if($this->session->examinee_id === NULL)
-			redirect('/exam/login');
+			show_404();
 		if($problem_id ==- NULL or $key === NULL)
 			show_404();
 		$aux = false;
