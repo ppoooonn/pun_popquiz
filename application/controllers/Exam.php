@@ -47,21 +47,23 @@ class Exam extends CI_Controller {
 		if($this->session->problem_order === NULL){
 			// First time access, generate random problem order
 			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $this->session->examinee_id);
-			$this->session->problem_order = count($problems['seen'])+1;
+			$this->session->problem_offset = count($problems['seen'])+1;
+			$this->session->problem_order = $this->session->problem_offset;
+			$this->session->problem_count = count($problems['seen'])+count($problems['unseen']);
 			shuffle($problems['unseen']);// TODO: if enable shuffle, quiz timer
-			$this->session->problem_list = array_merge($problems['seen'], $problems['unseen']);
+			$this->session->problem_list = $problems['unseen'];
 		}
 		if((int)$order != $this->session->problem_order){
 			redirect('/exam/quiz/'.($this->session->problem_order));
 		}
 
-		$problem_id = $this->session->problem_list[$this->session->problem_order-1];
+		$problem_id = $this->session->problem_list[$this->session->problem_order-$this->session->problem_offset];
 		$problem_info = $this->problem->get_problem_info($this->session->examinee_id, $problem_id);
 
 		if($this->input->post('problem') != NULL){
 			// TODO: save result
 			$this->session->problem_order = $this->session->problem_order + 1;
-			if($this->session->problem_order > count($this->session->problem_list))
+			if($this->session->problem_order > $this->session->problem_count)
 				redirect('/exam/finish');
 			else
 				redirect('/exam/quiz/'.($this->session->problem_order));
@@ -71,7 +73,7 @@ class Exam extends CI_Controller {
 				'quiz_title' => $this->session->quiz_title,
 				'problem' => [
 					'order' => $this->session->problem_order,
-					'count' => count($this->session->problem_list),
+					'count' => $this->session->problem_count,
 					'choice_count' => $problem_info['choices'],
 					'image' => $problem_info['image_main'],
 					'image_large' => $problem_info['image_aux'],

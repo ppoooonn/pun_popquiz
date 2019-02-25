@@ -3,6 +3,7 @@ remove .htaccess, web.config
 set ci-environment
 enable cache
 load test
+CSRF
 
 Make choice more noticable when time is running out
 Rename page title
