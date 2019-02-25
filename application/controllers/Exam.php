@@ -5,7 +5,7 @@ class Exam extends CI_Controller {
 
 	public function __construct() {
 		parent::__construct();
-		
+
 		$this->output->enable_profiler(TRUE);
 	}
 
@@ -79,6 +79,14 @@ class Exam extends CI_Controller {
 				]
 			]);
 		}
+	}
+	public function finish() {
+		if($this->session->examinee_id === NULL)
+			redirect('/exam/login');
+		$this->view([
+			'name' => $this->session->name,
+			'quiz_title' => $this->session->quiz_title,
+		]);
 	}
 	public function image($key=NULL, $problem_id=NULL) {
 		if($this->session->examinee_id === NULL)

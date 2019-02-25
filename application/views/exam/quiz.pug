@@ -15,12 +15,16 @@ html(lang='en')
 			}
 			#content {
 				display: none;
+				margin: 0 -0.5rem;
 			}
 			#content.show {
 				display: flex;
 			}
+			#content > div {
+				margin: 0 0.5rem;
+			}
 			#loading .header {
-				width: 100%;
+				margin: auto;
 			}
 			#loading.hide {
 				display: none;
@@ -48,7 +52,7 @@ html(lang='en')
 			#content .answer label {
 				user-select: none;
 			}
-			.ui.fullscreen.modal {
+			.ui.fullscreen.modal, .ui.scrolling.fullscreen.modal {
 				left: 2.5% !important;
 			}
 		script.

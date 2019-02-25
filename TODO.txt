@@ -2,5 +2,7 @@ Production server:
 remove .htaccess, web.config
 set ci-environment
 enable cache
+load test
 
 Make choice more noticable when time is running out
+Rename page title
