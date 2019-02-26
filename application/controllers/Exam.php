@@ -14,13 +14,13 @@ class Exam extends CI_Controller {
 			redirect('/exam/lounge');
 		if($this->input->post('token') != NULL){
 			$this->load->model('examinee');
-			$success = $this->examinee->login(
+			$resp = $this->examinee->login(
 				$this->input->post('token')
 			);
-			if($success)
+			if($resp===true)
 				redirect('/exam/lounge');
 			$this->view($data=[
-				'error_msg'=> ('Invalid token')
+				'error_msg'=> ($resp)
 			]);
 		} else
 			$this->view();
@@ -40,32 +40,43 @@ class Exam extends CI_Controller {
 			'instruction' => $quiz->instruction,
 		]);
 	}
-	public function quiz($order=NULL) {
-		if($this->session->examinee_id === NULL)
+	public function problem($order=NULL) {
+		$examinee_id = $this->session->examinee_id;
+		if($examinee_id === NULL)
 			redirect('/exam/login');
+		if($this->session->quiz_start_time > time())
+			redirect('/exam/lounge');
 		$this->load->model('problem');
 		if($this->session->problem_count === NULL){
 			// First time access, generate random problem order
-			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $this->session->examinee_id);
+			// TODO: requery quiz info?
+			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $examinee_id);
 			$this->session->problem_count = count($problems['seen'])+count($problems['unseen']);
-			shuffle($problems['unseen']);// TODO: if enable shuffle, quiz timer
-			$this->session->problem_list = $problems['unseen'];
+			if($this->session->quiz_shuffle)
+				shuffle($problems['unseen']);
+			$this->session->problem_list = array_merge($problems['started'], $problems['unseen']);
 		}
+		if(empty($this->session->problem_list))
+			redirect('/exam/finish');
 		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
 		if((int)$order != $problem_order){
-			redirect('/exam/quiz/'.($problem_order));
+			redirect('/exam/problem/'.($problem_order));
 		}
 
 		$problem_id = $this->session->problem_list[0];
-		$problem_info = $this->problem->get_problem_info($this->session->examinee_id, $problem_id);
+		$problem_info = $this->problem->get_problem_info($examinee_id, $problem_id);
+		// TODO: combine query?
+		$time = $this->problem->start_problem($examinee_id, $problem_id, $this->session->quiz_timer);
 
-		if($this->input->post('problem') != NULL){
-			// TODO: save result
+		if($time === false or (int)($this->input->post('problem')) === $problem_order){
+			$this->problem->save_answer($examinee_id, $problem_id, (int)($this->input->post('choice')), $this->session->quiz_timer);
+
+			// Next problem
 			$this->session->problem_list = array_slice($this->session->problem_list, 1);
-			if(count($this->session->problem_list) == 0)
+			if(empty($this->session->problem_list))
 				redirect('/exam/finish');
 			else
-				redirect('/exam/quiz/'.($problem_order + 1));
+				redirect('/exam/problem/'.($problem_order + 1));
 		} else {
 			$this->view([
 				'name' => $this->session->name,
@@ -76,9 +87,27 @@ class Exam extends CI_Controller {
 					'choice_count' => $problem_info['choices'],
 					'image' => $problem_info['image_main'],
 					'image_large' => $problem_info['image_aux'],
-					'timer' => 30,
-				]
+					'timer' => $this->session->quiz_timer,
+				],
+				'script_vars' => json_encode([
+					'end_time' => $time['loaded_time'] !== NULL?(
+						$time['loaded_time'] + $this->session->quiz_timer):(
+						$time['start_time'] + 60 + $this->session->quiz_timer),
+					'server_time' => time(),
+				]),
 			]);
+		}
+	}
+	public function problem_loaded($order=NULL) {
+		if($this->session->examinee_id === NULL)
+			show_404();
+		if(!$this->session->problem_list)
+			show_404();
+		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
+		if((int)($this->input->post('problem')) === $problem_order){
+			$this->load->model('problem');
+			$problem_id = $this->session->problem_list[0];
+			$this->problem->load_problem($this->session->examinee_id, $problem_id);
 		}
 	}
 	public function finish() {

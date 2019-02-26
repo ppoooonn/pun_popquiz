@@ -2,6 +2,10 @@ doctype html
 html(lang='en')
 	head
 		title= problem.order +'/'+ problem.count +' - '+ quiz_title
+		script.
+			var server = !{script_vars};
+			server.offset = server.server_time-Date.now()/1000;
+			server.end_time = (server.end_time - server.offset) * 1000;
 		include ../common.pug
 		style.
 			.ui.menu.fixed {
@@ -10,12 +14,10 @@ html(lang='en')
 			#content, #loading {
 				display: flex;
 				flex-wrap: wrap;
-				margin-top: 2rem;
-				margin-bottom: 1rem;
+				margin: 2rem -0.5rem 1rem;
 			}
 			#content {
 				display: none;
-				margin: 0 -0.5rem;
 			}
 			#content.show {
 				display: flex;
@@ -64,9 +66,14 @@ html(lang='en')
 					$('#loading').addClass('hide');
 					$('#content').addClass('show');
 					start_timer();
+					$.post('!{site_url("/exam/problem_loaded")}',{
+						'problem': !{problem.order}
+					});
 				};
 				var start_timer = function(){
 					var end = Date.now()+1000*problem_timer;
+					if(server.end_time < end)
+						end = server.end_time;
 					var update = function(){
 						var t = Math.ceil((end - Date.now())/1000);
 						if(t<=0){
