@@ -6,7 +6,7 @@ class Exam extends CI_Controller {
 	public function __construct() {
 		parent::__construct();
 
-		$this->output->enable_profiler(TRUE);
+		// $this->output->enable_profiler(TRUE);
 	}
 
 	public function login() {
@@ -44,35 +44,34 @@ class Exam extends CI_Controller {
 		if($this->session->examinee_id === NULL)
 			redirect('/exam/login');
 		$this->load->model('problem');
-		if($this->session->problem_order === NULL){
+		if($this->session->problem_count === NULL){
 			// First time access, generate random problem order
 			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $this->session->examinee_id);
-			$this->session->problem_offset = count($problems['seen'])+1;
-			$this->session->problem_order = $this->session->problem_offset;
 			$this->session->problem_count = count($problems['seen'])+count($problems['unseen']);
 			shuffle($problems['unseen']);// TODO: if enable shuffle, quiz timer
 			$this->session->problem_list = $problems['unseen'];
 		}
-		if((int)$order != $this->session->problem_order){
-			redirect('/exam/quiz/'.($this->session->problem_order));
+		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
+		if((int)$order != $problem_order){
+			redirect('/exam/quiz/'.($problem_order));
 		}
 
-		$problem_id = $this->session->problem_list[$this->session->problem_order-$this->session->problem_offset];
+		$problem_id = $this->session->problem_list[0];
 		$problem_info = $this->problem->get_problem_info($this->session->examinee_id, $problem_id);
 
 		if($this->input->post('problem') != NULL){
 			// TODO: save result
-			$this->session->problem_order = $this->session->problem_order + 1;
-			if($this->session->problem_order > $this->session->problem_count)
+			$this->session->problem_list = array_slice($this->session->problem_list, 1);
+			if(count($this->session->problem_list) == 0)
 				redirect('/exam/finish');
 			else
-				redirect('/exam/quiz/'.($this->session->problem_order));
+				redirect('/exam/quiz/'.($problem_order + 1));
 		} else {
 			$this->view([
 				'name' => $this->session->name,
 				'quiz_title' => $this->session->quiz_title,
 				'problem' => [
-					'order' => $this->session->problem_order,
+					'order' => $problem_order,
 					'count' => $this->session->problem_count,
 					'choice_count' => $problem_info['choices'],
 					'image' => $problem_info['image_main'],
