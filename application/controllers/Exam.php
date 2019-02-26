@@ -9,6 +9,11 @@ class Exam extends CI_Controller {
 		// $this->output->enable_profiler(TRUE);
 	}
 
+	public function index() {
+		if($this->session->examinee_id !== NULL)
+			redirect('/exam/lounge');
+		redirect('/exam/login');
+	}
 	public function login() {
 		if($this->session->examinee_id !== NULL)
 			redirect('/exam/lounge');
@@ -66,10 +71,10 @@ class Exam extends CI_Controller {
 		$problem_id = $this->session->problem_list[0];
 		$problem_info = $this->problem->get_problem_info($examinee_id, $problem_id);
 		// TODO: combine query?
-		$time = $this->problem->start_problem($examinee_id, $problem_id, $this->session->quiz_timer);
+		$time = $this->problem->start_problem($examinee_id, $problem_id, $this->session->quiz_timer + 5);
 
 		if($time === false or (int)($this->input->post('problem')) === $problem_order){
-			$this->problem->save_answer($examinee_id, $problem_id, (int)($this->input->post('choice')), $this->session->quiz_timer);
+			$this->problem->save_answer($examinee_id, $problem_id, (int)($this->input->post('choice')), $this->session->quiz_timer + 5);
 
 			// Next problem
 			$this->session->problem_list = array_slice($this->session->problem_list, 1);

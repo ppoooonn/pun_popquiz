@@ -61,7 +61,7 @@ class Problem extends CI_Model {
 		])->row();
 		if(!$row){
 			// First time
-			$start_time = time();
+			$start_time = $this->time();
 			$this->db->insert('answers',[
 				'examinee_id' => $examinee_id,
 				'problem_id' => $problem_id,
@@ -71,13 +71,13 @@ class Problem extends CI_Model {
 		}else{
 			if($row->submit_time !== NULL)
 				return false;
-			if($row->loaded_time !== NULL and $row->loaded_time < time() - $problem_timer){
+			if($row->loaded_time !== NULL and $row->loaded_time < $this->time() - $problem_timer){
 				// Time limit exceed
 				$this->discard_answer($examinee_id, $problem_id);
 				return false;
 			}
 			// TODO: config discard long load answer
-			// if($row->start_time < time() - $problem_timer - $loading_timer){
+			// if($row->start_time < $this->time() - $problem_timer - $loading_timer){
 			// }
 			return ['start_time' => $row->submit_time, 'loaded_time' => $row->loaded_time];
 		}
@@ -89,7 +89,7 @@ class Problem extends CI_Model {
 			'problem_id' => $problem_id
 		])->update('answers',[
 			'answer' => 0,
-			'submit_time' => time()
+			'submit_time' => $this->time()
 		]);
 	}
 
@@ -106,7 +106,7 @@ class Problem extends CI_Model {
 		}else{
 			if($row->submit_time !== NULL) // Submitted
 				return false;
-			if($row->loaded_time !== NULL and $row->loaded_time < time() - $problem_timer){
+			if($row->loaded_time !== NULL and $row->loaded_time < $this->time() - $problem_timer){
 				// Time limit exceed
 				$this->discard_answer($examinee_id, $problem_id);
 				return false;
@@ -117,7 +117,7 @@ class Problem extends CI_Model {
 				'problem_id' => $problem_id
 			])->update('answers',[
 				'answer' => $answer,
-				'submit_time' => time()
+				'submit_time' => $this->time()
 			]);
 			return true;
 		}
@@ -141,9 +141,13 @@ class Problem extends CI_Model {
 				'examinee_id' => $examinee_id,
 				'problem_id' => $problem_id
 			])->update('answers',[
-				'loaded_time' => time()
+				'loaded_time' => $this->time()
 			]);
 			return true;
 		}
+	}
+
+	public function time(){
+		return $this->input->server('REQUEST_TIME');
 	}
 }
