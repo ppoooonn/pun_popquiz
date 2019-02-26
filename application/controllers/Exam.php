@@ -74,7 +74,7 @@ class Exam extends CI_Controller {
 		$time = $this->problem->start_problem($examinee_id, $problem_id, $this->session->quiz_timer + 5);
 
 		if($time === false or (int)($this->input->post('problem')) === $problem_order){
-			$this->problem->save_answer($examinee_id, $problem_id, (int)($this->input->post('choice')), $this->session->quiz_timer + 5);
+			$this->problem->save_answer($examinee_id, $problem_id, (int)($this->input->post('choice')?:0), $this->session->quiz_timer + 5);
 
 			// Next problem
 			$this->session->problem_list = array_slice($this->session->problem_list, 1);

@@ -79,6 +79,7 @@ html(lang='en')
 						if(t<=0){
 							clearInterval(inv);
 							$('#timer').text('Timeout');
+							$('#answer-form').submit();
 							return;
 						}
 						var m = t/60|0;
@@ -130,7 +131,7 @@ html(lang='en')
 				.answer
 					.ui.segment
 						h2.ui.dividing.header#timer Answer
-						form.ui.form(action=current_url(), method='POST')
+						form.ui.form#answer-form(action=current_url(), method='POST')
 							input(type='hidden',name='problem',value=problem.order)
 							- for(var i=1; i<=problem.choice_count; i++)
 								.field
