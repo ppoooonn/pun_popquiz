@@ -1,0 +1,49 @@
+.ui.menu.fixed {
+	position: static;
+}
+#content, #loading {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 2rem -0.5rem 1rem;
+}
+#content {
+	display: none;
+}
+#content.show {
+	display: flex;
+}
+#content > div {
+	margin: 0 0.5rem;
+}
+#loading .header {
+	margin: auto;
+}
+#loading.hide {
+	display: none;
+}
+#content .problem {
+	min-width: 20rem;
+	flex-basis: 80%;
+	flex-grow: 8;
+}
+#content .problem img, #large-img img {
+	max-width: 100%;
+}
+#large-img .content {
+	text-align: center;
+}
+img.zoom {
+	cursor: -webkit-zoom-in;
+	cursor: zoom-in;
+}
+#content .answer {
+	min-width: 10rem;
+	width: 10rem;
+	flex-grow: 2;
+}
+#content .answer label {
+	user-select: none;
+}
+.ui.fullscreen.modal, .ui.scrolling.fullscreen.modal {
+	left: 2.5% !important;
+}

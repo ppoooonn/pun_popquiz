@@ -92,13 +92,14 @@ class Exam extends CI_Controller {
 					'choice_count' => $problem_info['choices'],
 					'image' => $problem_info['image_main'],
 					'image_large' => $problem_info['image_aux'],
-					'timer' => $this->session->quiz_timer,
 				],
 				'script_vars' => json_encode([
 					'end_time' => $time['loaded_time'] !== NULL?(
 						$time['loaded_time'] + $this->session->quiz_timer):(
 						$time['start_time'] + 60 + $this->session->quiz_timer),
 					'server_time' => time(),
+					'problem_timer' => $this->session->quiz_timer,
+					'problem_order' => $problem_order,
 				]),
 			]);
 		}
