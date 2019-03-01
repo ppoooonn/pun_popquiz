@@ -1,7 +1,7 @@
 {
 	"description" : "PopQuiz",
 	"require": {
-		"php": ">=5.3.2",
+		"php": ">=7.1",
 		"codeigniter/framework": "3.1.*",
 		"ci-pug/ci-pug": "^2.0"
 	},
