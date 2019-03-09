@@ -18,7 +18,9 @@ $(function(){
 			if(t<=0){
 				clearInterval(inv);
 				$('#timer').text('Timeout');
-				$('#answer-form').submit();
+				setTimeout(function(){
+					$('#answer-form').submit();
+				},100);
 				return;
 			}
 			var m = t/60|0;
