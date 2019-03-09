@@ -22,7 +22,8 @@ html(lang='en')
 				a.item(href=site_url('exam/logout')) Logout
 		main.ui.page.container
 			#loading
-				h1.ui.center.aligned.header Loading...
+				.ui.active.dimmer
+					.ui.text.loader Loading...
 			#content
 				.problem
 					img.ui.img(src=problem.image, class=problem.image_large?'zoom':'')
