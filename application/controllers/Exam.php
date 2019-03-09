@@ -110,13 +110,11 @@ class Exam extends CI_Controller {
 		if(!$this->session->problem_list)
 			show_404();
 		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
-		if((int)$order != $problem_order)
-			show_404();
-		if((int)($this->input->post('problem')) !== $problem_order){
+		if((int)($this->input->post('problem')?:$order) === $problem_order){
 			$this->load->model('problem');
 			$problem_id = $this->session->problem_list[0];
 			$this->problem->load_problem($this->session->examinee_id, $problem_id);
-		}
+		} else show_404();
 	}
 	public function finish() {
 		if($this->session->examinee_id === NULL)

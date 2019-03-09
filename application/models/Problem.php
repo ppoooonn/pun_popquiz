@@ -79,7 +79,7 @@ class Problem extends CI_Model {
 			// TODO: config discard long load answer
 			// if($row->start_time < $this->time() - $problem_timer - $loading_timer){
 			// }
-			return ['start_time' => $row->submit_time, 'loaded_time' => $row->loaded_time];
+			return ['start_time' => $row->start_time, 'loaded_time' => $row->loaded_time];
 		}
 	}
 
