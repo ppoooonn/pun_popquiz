@@ -34,10 +34,10 @@ class Exam extends CI_Controller {
 		if($this->session->examinee_id === NULL)
 			redirect('/exam/login');
 		$this->load->model('quiz');
-		$quiz = $this->quiz->get($this->session->quiz_id);
+		$quiz = $this->quiz->get($this->session->quiz_id, true);
 		$this->view([
 			'name' => $this->session->name,
-			'quiz_title' => $this->session->quiz_title,
+			'quiz_title' => $quiz->title,
 			'script_vars' => json_encode([
 				'start_time' => $quiz->start_time,
 				'server_time' => time(),
@@ -49,15 +49,20 @@ class Exam extends CI_Controller {
 		$examinee_id = $this->session->examinee_id;
 		if($examinee_id === NULL)
 			redirect('/exam/login');
-		if($this->session->quiz_start_time > time())
-			redirect('/exam/lounge');
 		$this->load->model('problem');
 		if($this->session->problem_count === NULL){
-			// First time access, generate random problem order
-			// TODO: requery quiz info?
+			// First time access
+			$this->load->model('quiz');
+			$quiz = $this->quiz->get($this->session->quiz_id);
+			if($quiz->start_time > time())
+				redirect('/exam/lounge');
+			$this->session->quiz_title = $quiz->title;
+			$this->session->quiz_timer = $quiz->problem_time;
+
+			// Generate random problem order
 			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $examinee_id);
 			$this->session->problem_count = count($problems['seen'])+count($problems['unseen']);
-			if($this->session->quiz_shuffle)
+			if($quiz->shuffle_flag)
 				shuffle($problems['unseen']);
 			$this->session->problem_list = array_merge($problems['started'], $problems['unseen']);
 		}

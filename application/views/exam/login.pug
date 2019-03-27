@@ -2,18 +2,16 @@ doctype html
 html(lang='en')
 	head
 		title Examminee Login
-		include ../common.pug
+		include common.pug
 	body
 		nav.ui.fixed.inverted.navbar.menu
 			.item PopQuiz
 		main.ui.page.grid.container
-			.row
-			.row
-				.column
-					h2.ui.dividing.header Login
-					form.ui.form(action=current_url(), method='POST', class=$error_msg?'error':'')
-						.ui.error.message= error_msg
-						.field
-							label Token
-							input(type='text', name='token', autocomplete='off')
-						button.ui.button(type='submit') Login
+			.column
+				h2.ui.dividing.header Login
+				form.ui.form(action=current_url(), method='POST', class=$error_msg?'error':'')
+					.ui.error.message= error_msg
+					.field
+						label Token
+						input(type='text', name='token', autocomplete='off')
+					button.ui.button(type='submit') Login

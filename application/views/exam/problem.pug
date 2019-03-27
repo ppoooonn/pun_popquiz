@@ -6,9 +6,8 @@ html(lang='en')
 			var server = !{script_vars};
 			server.offset = server.server_time-Date.now()/1000;
 			server.end_time = (server.end_time - server.offset) * 1000;
-		include ../common.pug
-		link(rel='stylesheet',type='text/css',href=base_url('static/exam.problem.css'))
-		script(src=base_url('static/exam.problem.js'))
+		include common.pug
+		script(src=base_url('static/exam/problem.js'))
 	body
 		if problem.image_large
 			#large-img.ui.fullscreen.modal

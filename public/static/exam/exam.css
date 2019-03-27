@@ -1,6 +1,12 @@
+/* common */
 .ui.menu.fixed {
 	position: static;
 }
+.hide {
+	display: none !important;
+}
+
+/* problem */
 #content, #loading {
 	display: flex;
 	flex-wrap: wrap;
@@ -17,9 +23,6 @@
 }
 #loading .header {
 	margin: auto;
-}
-#loading.hide {
-	display: none;
 }
 #content .problem {
 	min-width: 20rem;
@@ -46,4 +49,9 @@ img.zoom {
 }
 .ui.fullscreen.modal, .ui.scrolling.fullscreen.modal {
 	left: 2.5% !important;
+}
+
+/* lounge */
+.instruction {
+	white-space: pre;
 }

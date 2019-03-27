@@ -13,15 +13,41 @@ class Quiz extends CI_Model {
 			'shuffle_flag' => $shuffle,
 			'instruction' => $instruction,
 			'start_time' => $start_time,
+			'create_time' => time(),
 		]);
 		return $this->db->insert_id();
 	}
-	public function get($quiz_id){
+	public function get($quiz_id, $instruction=false){
+		$cols = ['title', 'shuffle_flag', 'start_time', 'problem_time'];
+		if($instruction)
+			$cols[] = 'instruction';
 		$result = $this->db
+		->select($cols)
 		->get_where('quiz',[
 			'quiz_id' => $quiz_id
 		])->row();
 		// handle exception
 		return $result;
+	}
+	public function list(){
+		$result = $this->db
+		->select([
+			'quiz_id',
+			'title',
+			'enable',
+			'start_time',
+			'end_time'
+		])
+		->order_by('quiz_id', 'DESC')
+		->get('quiz')->result();
+		// handle exception
+		return $result;
+	}
+	public function delete($quiz_id){
+		$this->db
+		->delete('quiz',[
+			'quiz_id' => $quiz_id
+		]);
+		return true;
 	}
 }

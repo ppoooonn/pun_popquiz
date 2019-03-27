@@ -5,8 +5,8 @@ html(lang='en')
 		script.
 			var server = !{script_vars};
 			server.offset = server.server_time-Date.now()/1000;
-		include ../common.pug
-		script(src=base_url('static/exam.lounge.js'))
+		include common.pug
+		script(src=base_url('static/exam/lounge.js'))
 	body
 		nav.ui.fixed.inverted.navbar.menu
 			.left.menu
@@ -15,11 +15,14 @@ html(lang='en')
 				.item= name
 				a.item(href=site_url('exam/logout')) Logout
 		main.ui.page.grid.container
-				.row
-				.row
-					.column
-						h1.ui.header.quiz-title= quiz_title
-						pre.instruction= instruction
-						.field
-							button.ui.toggle.button#start_btn Ready
-							label#timer Loading...
+			.column
+				h1.ui.dividing.header.quiz-title= quiz_title
+				.instruction= instruction
+				.ui.divider
+				p
+					.ui.checkbox
+						input#agree(type="checkbox")
+						label ข้าพเจ้าได้อ่านและรับทราบข้อกำหนดของการสอบแล้ว
+					button.ui.large.green.button.hide#start_btn Start
+				p
+					#timer Loading...
