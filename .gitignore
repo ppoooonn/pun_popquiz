@@ -32,3 +32,6 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 
 # Upload folder
 /data
+/webpack/dist
+/webpack/node_modules
+/webpack/semantic

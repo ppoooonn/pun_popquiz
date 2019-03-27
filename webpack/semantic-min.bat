@@ -1,0 +1,1 @@
+purifycss fomantic.css semantic\dist\semantic.js "..\application\views\exam\**" "..\public\static\exam\*" -o dist/pack.css --info -m -w "*:not*"
