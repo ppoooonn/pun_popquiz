@@ -18,7 +18,7 @@ class Quiz extends CI_Model {
 		return $this->db->insert_id();
 	}
 	public function get($quiz_id, $instruction=false){
-		$cols = ['title', 'shuffle_flag', 'start_time', 'problem_time'];
+		$cols = ['quiz_id', 'title', 'shuffle_flag', 'start_time', 'problem_time'];
 		if($instruction)
 			$cols[] = 'instruction';
 		$result = $this->db

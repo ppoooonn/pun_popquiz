@@ -15,6 +15,10 @@ class Cli extends CI_Controller {
 		$this->load->model('examinee');
 		echo $this->examinee->create($quiz_id, $name, $token)?'Success':'Failed';
 	}
+	public function add_admin($username, $password) {
+		$this->load->model('admin_user');
+		echo $this->admin->create($username, $password);
+	}
 
 	public function get_image_key($examinee_id, $problem_id) {
 		$this->load->model('problem');

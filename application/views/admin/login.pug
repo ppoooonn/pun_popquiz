@@ -1,0 +1,21 @@
+doctype html
+html(lang='en')
+	head
+		title Admin Login
+		include common.pug
+	body
+		nav.ui.fixed.navbar.menu
+			.item 
+				b PopQuiz Admin
+		main.ui.page.grid.container
+			.column
+				h2.ui.dividing.header ผู้ดูแลระบบ
+				form.ui.form(action='', method='POST', class=$error_msg?'error':'')
+					.ui.error.message= error_msg
+					.field
+						label Username
+						input(type='text', name='username')
+					.field
+						label Password
+						input(type='password', name='password')
+					button.ui.button(type='submit') Login

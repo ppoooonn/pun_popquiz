@@ -1,0 +1,15 @@
+/* common */
+.ui.menu.fixed {
+	position: static;
+}
+.hide {
+	display: none !important;
+}
+.ui.input.left.right.icon > input {
+	padding-left: 2.67142857em!important;
+	padding-right: 2.67142857em!important;
+}
+.ui.input.left.right.icon > .left.icon {
+	left: 1px;
+	right: auto;
+}

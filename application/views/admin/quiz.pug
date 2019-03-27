@@ -1,0 +1,206 @@
+doctype html
+html(lang='en')
+	head
+		title Exam list
+		script.
+			var server = !{script_vars};
+		include common.pug
+		script.
+			$(function(){
+				server.quiz.start_time = new Date((+server.quiz.start_time) * 1000);
+				var formatDate = function(date){
+					if(+date == 0)
+						return '';
+					return date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+
+						' '+date.toTimeString().substring(0,5);
+				};
+				var parseDate = function(str){
+					if(typeof str == 'string'){
+						if(str == '') return new Date(0);
+						var date_component, time_component;
+						for(let component of str.split(' ')){
+							let r;
+							if(r = component.match('^(\\d{1,2})-(\\d{1,2})-(\\d{1,4})$')){
+								date_component = [r[3],r[2],r[1]];
+								continue;
+							}
+							if(r = component.match('^(\\d{1,4})-(\\d{1,2})-(\\d{1,2})$')){
+								date_component = [r[1],r[2],r[3]];
+								continue;
+							}
+							if(r = component.match('^(\\d{1,2})/(\\d{1,2})/(\\d{1,4})$')){
+								date_component = [r[3],r[2],r[1]];
+								continue;
+							}
+							if(r = component.match('^(\\d{1,4})/(\\d{1,2})/(\\d{1,2})$')){
+								date_component = [r[1],r[2],r[3]];
+								continue;
+							}
+							if(r = component.match('^(\\d{1,2}):(\\d{1,2})(?::\\d{1,2})?$')){
+								time_component = [r[1],r[2]];
+								continue;
+							}
+						}
+						if(date_component && time_component){
+							var d = new Date(date_component[0], date_component[1]-1, date_component[2], time_component[0], time_component[1]);
+							console.log(d,isNaN(d));
+							return d;
+						}
+					}
+					return new Date(str);
+				};
+				window.app = new Vue({ // remove window
+					el: '#app',
+					data : {
+						quiz: server.quiz,
+						searchbar: '',
+						start_time_field: formatDate(server.quiz.start_time),
+					},
+					computed: {
+						duration_field: {
+							get:function(){
+								return this.quiz.duration||"";
+							},
+							set:function(val){
+								this.quiz.duration = val;
+							}
+						},
+						problem_time_field: {
+							get:function(){
+								return this.quiz.problem_time||"";
+							},
+							set:function(val){
+								this.quiz.problem_time = val;
+							}
+						},
+					},
+					methods: {
+						validateIntOrNull: function(val){
+							return /^\+?(0|[1-9]\d*)$/.test(val);
+						},
+						setStartTime: function(val, inhibit_calendar){
+							console.log('!set');
+							if(!(val instanceof Date))
+								val = parseDate(val);
+							if(isNaN(val)) return true;
+							console.log('set');
+							this.quiz.start_time = val;
+							this.start_time_field = formatDate(val);
+							$('.ui.calendar').calendar('set date', +val == 0?(new Date()):val, false, !inhibit_calendar);
+						},
+						deleteModal: function(){
+							$('#delete-confirm').modal({
+								onApprove: function(){
+									$.post({
+										url: '/admin/api_quiz_delete',
+										data: {
+											quiz_id: server.quiz.quiz_id
+										},
+										success: function(resp){
+											location.href = '/admin/quiz_list';
+										},
+										dataType: 'json'
+									});
+								}
+							}).modal('show');
+						}
+					}
+				});
+				$('.ui.calendar').calendar({
+					ampm: false,
+					selector: {
+						input: 'input.data',
+						activator: 'input.activator',
+					},
+					onChange: function(val){
+						if(+app.quiz.start_time != +val)
+							app.setStartTime(val, true);
+					}
+				});
+			});
+	body
+		#app
+			.ui.mini.modal#delete-confirm
+				.header
+					i.trash.alternate.icon
+					| ยืนยันการลบ?
+				.content
+					| ถ้าหากลบแล้วจะไม่สามารถ เรียกคืนข้อมูลได้
+				.actions
+					.ui.red.cancel.button ยกเลิก
+					.ui.green.ok.button ลบ
+			nav.ui.fixed.navbar.menu
+				.left.menu
+					.item
+						.ui.breadcrumb
+							a.section(href='/admin/quiz_list') Quiz List
+							i.right.arrow.icon.divider
+							.active.section {{quiz.title}}
+				.right.menu
+					a.item(href='/admin/logout') Logout
+			main.ui.grid.container
+				.column
+					.ui.grid
+						.six.wide.column
+							.ui.segment
+								h2.ui.dividing.header Action
+								p
+									a.ui.labeled.icon.button.big.teal(href="/admin/problems/"+quiz_id)
+										i.edit.icon
+										| คำถาม
+								p
+									a.ui.labeled.icon.button.big.teal(href="/admin/examinee/"+quiz_id)
+										i.user.icon
+										| รายชื่อผู้เข้าสอบ
+								p
+									a.ui.labeled.icon.button.big.teal(href="/admin/scores/"+quiz_id)
+										i.download.icon
+										| ดาว์นโหลดคะแนน
+						.ten.wide.column
+							.ui.segment
+								h2.ui.dividing.header รายละเอียด
+								.ui.form
+									.field
+										label ชื่อข้อสอบ
+										input(type="text",v-model="quiz.title",placeholder="ชื่อข้อสอบ")
+									.field
+										label วันที่/เวลาเริ่มสอบ
+										.ui.calendar
+											.ui.input.left.right.icon
+												i.calendar.left.icon
+												input.activator(type="text", placeholder="ไม่กำหนด", v-model="start_time_field", v-on:change="setStartTime(start_time_field)")
+												i.close.link.right.icon(v-on:click="setStartTime(0, true)", v-show="start_time_field")
+												input.data(type="hidden")
+									.fields
+										.eight.wide.field
+											label Duration (นาที)
+											.ui.icon.input
+												input(type="text",v-model="duration_field",placeholder="ไม่จำกัด")
+												i.close.link.icon(v-show="duration_field", v-on:click="duration_field=''")
+										.eight.wide.field
+											label เวลาต่อข้อ (วินาที)
+											.ui.input.icon
+												input(type="text",v-model="problem_time_field",placeholder="ไม่จำกัด")
+												i.close.link.icon(v-show="problem_time_field", v-on:click="problem_time_field=''")
+									.fields
+										.field
+											.ui.toggle.checkbox
+												input(type="checkbox",v-model="quiz.enable")
+												label เปิดใช้งาน
+										.field
+											.ui.toggle.checkbox
+												input(type="checkbox",v-model="quiz.shuffle_flag")
+												label สุ่มลำดับคำถาม
+									.field
+										label คำชี้แจง
+										textarea(v-model="quiz.instruction",placeholder="คำชี้แจง")
+									.ui.big.breadcrumb
+										.section
+											button.ui.primary.button Save
+										.divider
+										.section
+											button.ui.button Reset
+										.divider
+											| &emsp;|&emsp;
+										.section
+											button.ui.red.button(v-on:click="deleteModal") Delete

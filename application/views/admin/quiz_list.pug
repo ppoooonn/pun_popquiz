@@ -1,0 +1,99 @@
+doctype html
+html(lang='en')
+	head
+		title Exam list
+		script.
+			var server = !{script_vars};
+			server.offset = server.server_time-Date.now()/1000;
+		include common.pug
+		script.
+			$(function(){
+				var app = new Vue({
+					el: 'main',
+					data : {
+						quizzes: server.quiz,
+						searchbar: ''
+					},
+					methods: {
+						// TODO: error
+						update: function(response){
+							if('quiz' in response){
+								this.quizzes = response.quiz;
+							}
+						},
+						fetch: function(){
+							$.getJSON('api_quiz_list', this.update);
+						},
+						create: function(){
+							$.getJSON('api_quiz_create', this.update);
+						}
+					},
+					computed: {
+						filteredQuizzes: function(){
+							if(this.searchbar){
+								var needle = this.searchbar.toLocaleLowerCase();
+								var out = [];
+								for (let i of this.quizzes){
+									if(i.title.toLocaleLowerCase().indexOf(needle)!==-1)
+										out.push(i);
+								}
+								return out;
+							} else
+								return this.quizzes;
+						}
+					},
+					filters: {
+						timestampToDate: function(timestamp){
+							if(timestamp==0)
+								return '-';
+							var d = new Date((+timestamp+server.offset)*1000);
+							return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+
+								' '+d.toTimeString().substring(0,8);
+						}
+					}
+				});
+			});
+	body
+		nav.ui.fixed.navbar.menu
+			.item
+				.ui.breadcrumb
+					.active.section Quiz List
+			.right.menu
+				a.item(href='/admin/logout') Logout
+		main.ui.page.grid.container
+			.column
+				h1.ui.dividing.header Quiz List
+				.ui.items
+					.item
+						.content
+							.ui.icon.input
+								input(type="text",placeholder="Search...",v-model="searchbar")
+								i.search.icon(v-show="!searchbar")
+								i.close.link.icon(v-show="searchbar", v-on:click="searchbar=''")
+							.right.floated
+								//- button.ui.button(v-on:click="fetch")
+								//- 	| Update
+								button.ui.labeled.icon.primary.button(v-on:click="create")
+									i.plus.icon
+									| New Quiz
+				table.ui.selectable.celled.table
+					thead
+						tr
+							th.one.wide Enable
+							th.four.wide Start time
+							th Title
+					tbody
+						tr(v-for="quiz in filteredQuizzes")
+							// TODO: clickable enable
+							td.selectable.center.aligned.positive(v-if="quiz.enable")
+								i.checkmark.icon
+							td.selectable.center.aligned.negative(v-else)
+								i.close.icon
+							td.selectable
+								a(:href="'quiz/' + quiz.quiz_id")
+									{{quiz.start_time | timestampToDate}}
+							td.selectable
+								a(:href="'quiz/' + quiz.quiz_id")
+									{{quiz.title}}
+						tr(v-if="quizzes.length == 0")
+							td.center.aligned(colspan=3) No quiz yet.
