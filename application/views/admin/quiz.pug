@@ -42,9 +42,7 @@ html(lang='en')
 							}
 						}
 						if(date_component && time_component){
-							var d = new Date(date_component[0], date_component[1]-1, date_component[2], time_component[0], time_component[1]);
-							console.log(d,isNaN(d));
-							return d;
+							return new Date(date_component[0], date_component[1]-1, date_component[2], time_component[0], time_component[1]);
 						}
 					}
 					return new Date(str);
@@ -52,31 +50,19 @@ html(lang='en')
 				window.app = new Vue({ // remove window
 					el: '#app',
 					data : {
-						quiz: server.quiz,
 						searchbar: '',
+						start_time: server.quiz.start_time,
 						start_time_field: formatDate(server.quiz.start_time),
-					},
-					computed: {
-						duration_field: {
-							get:function(){
-								return +this.quiz.duration||"";
-							},
-							set:function(val){
-								this.quiz.duration = +val;
-							}
-						},
-						problem_time_field: {
-							get:function(){
-								return +this.quiz.problem_time||"";
-							},
-							set:function(val){
-								this.quiz.problem_time = +val;
-							}
-						},
+						duration_field: server.quiz.duration||'',
+						problem_time_field: server.quiz.problem_time||'',
+						title_field: server.quiz.title,
+						enable_field: server.quiz.enable,
+						shuffle_field: server.quiz.shuffle_flag,
+						instruction_field: server.quiz.instruction,
 					},
 					methods: {
 						validateIntOrNull: function(val){
-							return /^\+?(0|[1-9]\d*)$/.test(val);
+							return /^\d*$/.test(val);
 						},
 						setStartTime: function(val, inhibit_calendar){
 							console.log('!set');
@@ -84,7 +70,7 @@ html(lang='en')
 								val = parseDate(val);
 							if(isNaN(val)) return true;
 							console.log('set');
-							this.quiz.start_time = val;
+							this.start_time = val;
 							this.start_time_field = formatDate(val);
 							$('.ui.calendar').calendar('set date', +val == 0?(new Date()):val, false, !inhibit_calendar);
 						},
@@ -103,7 +89,8 @@ html(lang='en')
 									});
 								}
 							}).modal('show');
-						}
+						},
+						parseDate:parseDate
 					}
 				});
 				$('.ui.calendar').calendar({
@@ -113,7 +100,7 @@ html(lang='en')
 						activator: 'input.activator',
 					},
 					onChange: function(val){
-						if(+app.quiz.start_time != +val)
+						if(+app.start_time != +val)
 							app.setStartTime(val, true);
 					}
 				});
@@ -135,7 +122,7 @@ html(lang='en')
 						.ui.breadcrumb
 							a.section(href='/admin/quiz_list') Quiz List
 							i.right.arrow.icon.divider
-							.active.section {{quiz.title}}
+							.active.section {{title_field}}
 				.right.menu
 					a.item(href='/admin/logout') Logout
 			main.ui.grid.container
@@ -160,40 +147,40 @@ html(lang='en')
 							.ui.segment
 								h2.ui.dividing.header รายละเอียด
 								.ui.form
-									.field
+									.field(:class="{error:title_field==''}")
 										label ชื่อข้อสอบ
-										input(type="text",v-model="quiz.title",placeholder="ชื่อข้อสอบ")
-									.field
+										input(type="text",v-model="title_field",placeholder="ชื่อข้อสอบ")
+									.field(:class="{error:isNaN(parseDate(start_time_field))}")
 										label วันที่/เวลาเริ่มสอบ
 										.ui.calendar
 											.ui.input.left.right.icon
 												i.calendar.left.icon
-												input.activator(type="text", placeholder="ไม่กำหนด", v-model="start_time_field", v-on:change="setStartTime(start_time_field)")
-												i.close.link.right.icon(v-on:click="setStartTime(0, true)", v-show="start_time_field")
+												input.activator(type="text", placeholder="ไม่กำหนด", v-model="start_time_field", @change="setStartTime(start_time_field)")
+												i.close.link.right.icon(@click="setStartTime(0, true)", v-show="start_time_field")
 												input.data(type="hidden")
 									.fields
-										.eight.wide.field
+										.eight.wide.field(:class="{error:!validateIntOrNull(duration_field)}")
 											label Duration (นาที)
 											.ui.icon.input
 												input(type="text",v-model="duration_field",placeholder="ไม่จำกัด")
-												i.close.link.icon(v-show="duration_field", v-on:click="duration_field=''")
-										.eight.wide.field
+												i.close.link.icon(v-show="duration_field", @click="duration_field=''")
+										.eight.wide.field(:class="{error:!validateIntOrNull(problem_time_field)}")
 											label เวลาต่อข้อ (วินาที)
 											.ui.input.icon
 												input(type="text",v-model="problem_time_field",placeholder="ไม่จำกัด")
-												i.close.link.icon(v-show="problem_time_field", v-on:click="problem_time_field=''")
+												i.close.link.icon(v-show="problem_time_field", @click="problem_time_field=''")
 									.fields
 										.field
 											.ui.toggle.checkbox
-												input(type="checkbox",v-model="quiz.enable")
+												input(type="checkbox",v-model="enable_field")
 												label เปิดใช้งาน
 										.field
 											.ui.toggle.checkbox
-												input(type="checkbox",v-model="quiz.shuffle_flag")
+												input(type="checkbox",v-model="shuffle_field")
 												label สุ่มลำดับคำถาม
 									.field
 										label คำชี้แจง
-										textarea(v-model="quiz.instruction",placeholder="คำชี้แจง")
+										textarea(v-model="instruction_field",placeholder="คำชี้แจง")
 									.ui.big.breadcrumb
 										.section
 											button.ui.primary.button Save
@@ -203,4 +190,4 @@ html(lang='en')
 										.divider
 											| &emsp;|&emsp;
 										.section
-											button.ui.red.button(v-on:click="deleteModal") Delete
+											button.ui.red.button(@click="deleteModal") Delete
