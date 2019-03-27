@@ -59,18 +59,18 @@ html(lang='en')
 					computed: {
 						duration_field: {
 							get:function(){
-								return this.quiz.duration||"";
+								return +this.quiz.duration||"";
 							},
 							set:function(val){
-								this.quiz.duration = val;
+								this.quiz.duration = +val;
 							}
 						},
 						problem_time_field: {
 							get:function(){
-								return this.quiz.problem_time||"";
+								return +this.quiz.problem_time||"";
 							},
 							set:function(val){
-								this.quiz.problem_time = val;
+								this.quiz.problem_time = +val;
 							}
 						},
 					},
