@@ -3,7 +3,7 @@ $(function(){
 		if(--loading > 0)
 			return true;
 		$('#loading').addClass('hide');
-		$('#content').addClass('show');
+		$('#content').removeClass('hide');
 		start_timer();
 		$.post('/exam/problem_loaded',{
 			'problem': server.problem_order

@@ -13,9 +13,6 @@
 	margin: 2rem -0.5rem 1rem;
 }
 #content {
-	display: none;
-}
-#content.show {
 	display: flex;
 }
 #content > div {
