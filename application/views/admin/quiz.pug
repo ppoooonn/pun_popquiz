@@ -7,7 +7,6 @@ html(lang='en')
 		include common.pug
 		script.
 			$(function(){
-				server.quiz.start_time = new Date((+server.quiz.start_time) * 1000);
 				var formatDate = function(date){
 					if(+date == 0)
 						return '';
@@ -51,31 +50,32 @@ html(lang='en')
 					el: '#app',
 					data : {
 						searchbar: '',
-						start_time: server.quiz.start_time,
-						start_time_field: formatDate(server.quiz.start_time),
-						duration_field: server.quiz.duration||'',
-						problem_time_field: server.quiz.problem_time||'',
-						title_field: server.quiz.title,
-						enable_field: server.quiz.enable,
-						shuffle_field: server.quiz.shuffle_flag,
-						instruction_field: server.quiz.instruction,
+						start_time: 0,
+						start_time_field: '',
+						duration_field: '',
+						problem_time_field: '',
+						title_field: '',
+						enable_field: 0,
+						shuffle_field: 0,
+						instruction_field: '',
+						store: server.quiz
 					},
 					methods: {
+						// TODO: error handling
 						validateIntOrNull: function(val){
 							return /^\d*$/.test(val);
 						},
 						setStartTime: function(val, inhibit_calendar){
-							console.log('!set');
 							if(!(val instanceof Date))
 								val = parseDate(val);
 							if(isNaN(val)) return true;
-							console.log('set');
 							this.start_time = val;
 							this.start_time_field = formatDate(val);
 							$('.ui.calendar').calendar('set date', +val == 0?(new Date()):val, false, !inhibit_calendar);
 						},
 						deleteModal: function(){
 							$('#delete-confirm').modal({
+								duration: 100,
 								onApprove: function(){
 									$.post({
 										url: '/admin/api_quiz_delete',
@@ -90,10 +90,67 @@ html(lang='en')
 								}
 							}).modal('show');
 						},
-						parseDate:parseDate
+						saveForm: function(){
+							if(this.has_error) return;
+							this.fieldToData();
+							var self = this;
+							$.post({
+								url: '/admin/api_quiz_edit',
+								data: this.store,
+								success: function(resp){
+									if('quiz' in resp){
+										self.store = resp.quiz;
+										self.fieldFromData();
+										$('#form .ui.success.dimmer').dimmer('show');
+									}
+								},
+								dataType: 'json'
+							});
+						},
+						resetForm: function(){
+							this.fieldFromData();
+						},
+						fieldFromData: function(quiz){
+							this.setStartTime(new Date((+this.store.start_time) * 1000));
+							this.duration_field = +this.store.duration||'';
+							this.problem_time_field = +this.store.problem_time||'';
+							this.title_field = this.store.title;
+							this.enable_field = +this.store.enable;
+							this.shuffle_field = +this.store.shuffle_flag;
+							this.instruction_field = this.store.instruction;
+						},
+						fieldToData: function(){
+							this.store.start_time = Math.round(+this.start_time/1000);
+							this.store.duration = +this.duration_field;
+							this.store.problem_time = +this.problem_time_field;
+							this.store.title = this.title_field;
+							this.store.enable = +this.enable_field;
+							this.store.shuffle_flag = +this.shuffle_field;
+							this.store.instruction = this.instruction_field;
+						},
+					},
+					created: function() {
+						this.fieldFromData();
+					},
+					computed: {
+						title_error: function(){
+							return this.title_field=='';
+						},
+						calendar_error: function(){
+							return isNaN(parseDate(this.start_time_field));
+						},
+						duration_error: function(){
+							return !this.validateIntOrNull(this.duration_field);
+						},
+						problem_time_error: function(){
+							return !this.validateIntOrNull(this.problem_time_field);
+						},
+						has_error: function(){
+							return this.title_error || this.calendar_error || this.duration_error || this.problem_time_error;
+						},
 					}
 				});
-				$('.ui.calendar').calendar({
+				$('#form .ui.calendar').calendar({
 					ampm: false,
 					selector: {
 						input: 'input.data',
@@ -104,18 +161,26 @@ html(lang='en')
 							app.setStartTime(val, true);
 					}
 				});
+				app.setStartTime(app.start_time, true);
+				$('.ui.checkbox').checkbox();
+				$('.ui.dimmer').dimmer({
+					duration:{
+						show : 100,
+						hide : 100
+					}
+				});
 			});
 	body
 		#app
 			.ui.mini.modal#delete-confirm
 				.header
 					i.trash.alternate.icon
-					| ยืนยันการลบ?
+					| Delete Confirmation
 				.content
 					| ถ้าหากลบแล้วจะไม่สามารถ เรียกคืนข้อมูลได้
 				.actions
-					.ui.red.cancel.button ยกเลิก
-					.ui.green.ok.button ลบ
+					.ui.red.cancel.button Cancel
+					.ui.green.ok.button Delete
 			nav.ui.fixed.navbar.menu
 				.left.menu
 					.item
@@ -142,52 +207,56 @@ html(lang='en')
 								p
 									a.ui.labeled.icon.button.big.teal(href="/admin/scores/"+quiz_id)
 										i.download.icon
-										| ดาว์นโหลดคะแนน
+										| ดาวน์โหลดคะแนน
 						.ten.wide.column
-							.ui.segment
+							.ui.segment.form#form
 								h2.ui.dividing.header รายละเอียด
-								.ui.form
-									.field(:class="{error:title_field==''}")
-										label ชื่อข้อสอบ
-										input(type="text",v-model="title_field",placeholder="ชื่อข้อสอบ")
-									.field(:class="{error:isNaN(parseDate(start_time_field))}")
-										label วันที่/เวลาเริ่มสอบ
-										.ui.calendar
-											.ui.input.left.right.icon
-												i.calendar.left.icon
-												input.activator(type="text", placeholder="ไม่กำหนด", v-model="start_time_field", @change="setStartTime(start_time_field)")
-												i.close.link.right.icon(@click="setStartTime(0, true)", v-show="start_time_field")
-												input.data(type="hidden")
-									.fields
-										.eight.wide.field(:class="{error:!validateIntOrNull(duration_field)}")
-											label Duration (นาที)
-											.ui.icon.input
-												input(type="text",v-model="duration_field",placeholder="ไม่จำกัด")
-												i.close.link.icon(v-show="duration_field", @click="duration_field=''")
-										.eight.wide.field(:class="{error:!validateIntOrNull(problem_time_field)}")
-											label เวลาต่อข้อ (วินาที)
-											.ui.input.icon
-												input(type="text",v-model="problem_time_field",placeholder="ไม่จำกัด")
-												i.close.link.icon(v-show="problem_time_field", @click="problem_time_field=''")
-									.fields
-										.field
-											.ui.toggle.checkbox
-												input(type="checkbox",v-model="enable_field")
-												label เปิดใช้งาน
-										.field
-											.ui.toggle.checkbox
-												input(type="checkbox",v-model="shuffle_field")
-												label สุ่มลำดับคำถาม
+								.field(:class="{error:title_error}")
+									label ชื่อข้อสอบ
+									input(type="text",v-model="title_field",placeholder="ชื่อข้อสอบ")
+								.field(:class="{error:calendar_error}")
+									label วันที่/เวลาเริ่มสอบ
+									.ui.calendar
+										.ui.input.left.right.icon
+											i.calendar.left.icon
+											input.activator(type="text", placeholder="ไม่กำหนด", v-model="start_time_field", @change="setStartTime(start_time_field)")
+											i.close.link.right.icon(@click="setStartTime(0, true)", v-show="start_time_field")
+											input.data(type="hidden")
+								.fields
+									.eight.wide.field(:class="{error:duration_error}")
+										label Duration (นาที)
+										.ui.icon.input
+											input(type="text",v-model="duration_field",placeholder="ไม่จำกัด")
+											i.close.link.icon(v-show="duration_field", @click="duration_field=''")
+									.eight.wide.field(:class="{error:problem_time_error}")
+										label เวลาต่อข้อ (วินาที)
+										.ui.input.icon
+											input(type="text",v-model="problem_time_field",placeholder="ไม่จำกัด")
+											i.close.link.icon(v-show="problem_time_field", @click="problem_time_field=''")
+								.fields
 									.field
-										label คำชี้แจง
-										textarea(v-model="instruction_field",placeholder="คำชี้แจง")
-									.ui.big.breadcrumb
-										.section
-											button.ui.primary.button Save
-										.divider
-										.section
-											button.ui.button Reset
-										.divider
-											| &emsp;|&emsp;
-										.section
-											button.ui.red.button(@click="deleteModal") Delete
+										.ui.toggle.checkbox
+											input(type="checkbox",v-model="enable_field")
+											label เปิดใช้งาน
+									.field
+										.ui.toggle.checkbox
+											input(type="checkbox",v-model="shuffle_field")
+											label สุ่มลำดับคำถาม
+								.field
+									label คำชี้แจง
+									textarea(v-model="instruction_field",placeholder="คำชี้แจง")
+								.ui.big.breadcrumb
+									.section
+										button.ui.primary.button(:class="{disabled:has_error}",@click="saveForm") Save
+									.divider
+									.section
+										button.ui.button(@click="resetForm") Reset
+									.divider
+										| &emsp;|&emsp;
+									.section
+										button.ui.red.button(@click="deleteModal") Delete
+								.ui.success.dimmer
+									.content
+										h2.ui.inverted.icon.header
+											i.check.icon
+											| Saved

@@ -111,9 +111,9 @@ class Exam extends CI_Controller {
 	}
 	public function problem_loaded($order=NULL) {
 		if($this->session->examinee_id === NULL)
-			show_404();
+			show_error('Not logged in.', 403);
 		if(!$this->session->problem_list)
-			show_404();
+			show_error('Not started yet.', 400);
 		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
 		if((int)($this->input->post('problem')?:$order) === $problem_order){
 			$this->load->model('problem');
@@ -131,7 +131,7 @@ class Exam extends CI_Controller {
 	}
 	public function image($key=NULL, $problem_id=NULL) {
 		if($this->session->examinee_id === NULL)
-			show_404();
+			show_error('Not logged in.', 403);
 		$problem_id = (string) $problem_id;
 		$key = (string) $key;
 		if($problem_id === NULL or $problem_id === '' or $key === NULL)

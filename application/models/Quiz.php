@@ -18,7 +18,7 @@ class Quiz extends CI_Model {
 		return $this->db->insert_id();
 	}
 	public function get($quiz_id, $instruction=false){
-		$cols = ['quiz_id', 'title', 'shuffle_flag', 'start_time', 'problem_time', 'duration'];
+		$cols = ['quiz_id', 'title', 'shuffle_flag', 'enable', 'start_time', 'problem_time', 'duration'];
 		if($instruction)
 			$cols[] = 'instruction';
 		$result = $this->db
@@ -29,6 +29,12 @@ class Quiz extends CI_Model {
 		// handle exception
 		return $result;
 	}
+	public function edit($quiz_id, $data){
+		$resp = $this->db
+		->where('quiz_id', $quiz_id)
+		->update('quiz', $data);
+		return $this->get($quiz_id, true);
+	}
 	public function list(){
 		$result = $this->db
 		->select([
@@ -36,7 +42,7 @@ class Quiz extends CI_Model {
 			'title',
 			'enable',
 			'start_time',
-			'end_time'
+			'duration'
 		])
 		->order_by('quiz_id', 'DESC')
 		->get('quiz')->result();

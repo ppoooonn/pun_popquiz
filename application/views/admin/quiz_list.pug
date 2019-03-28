@@ -15,7 +15,7 @@ html(lang='en')
 						searchbar: ''
 					},
 					methods: {
-						// TODO: error
+						// TODO: error handling
 						update: function(response){
 							if('quiz' in response){
 								this.quizzes = response.quiz;
@@ -26,6 +26,28 @@ html(lang='en')
 						},
 						create: function(){
 							$.getJSON('api_quiz_create', this.update);
+						},
+						switchEnable: function(quiz, new_enable){
+							$('#enable-confirm .content').text((new_enable?							'ยืนยันการเปิดใช้งานข้อสอบ ':'ยืนยันการปิดใช้งานข้อสอบ ') + quiz.title);
+							$('#enable-confirm .new-state').text(new_enable?							'Enable':'Disable');
+							$('#enable-confirm').modal({
+								duration: 100,
+								onApprove: function(){
+									$.post({
+										url: '/admin/api_quiz_enable',
+										data: {
+											quiz_id: quiz.quiz_id,
+											enable: +new_enable
+										},
+										success: function(resp){
+											if('quiz' in resp){
+												quiz.enable = resp.quiz.enable;
+											}
+										},
+										dataType: 'json'
+									});
+								}
+							}).modal('show');
 						}
 					},
 					computed: {
@@ -54,6 +76,16 @@ html(lang='en')
 				});
 			});
 	body
+		.ui.mini.modal#enable-confirm
+			.header
+				i.check.square.outline.icon
+				span.new-state
+				|  Confirmation
+			.content
+			.actions
+				.ui.red.cancel.button Cancel
+				.ui.green.ok.button
+					span.new-state
 		nav.ui.fixed.navbar.menu
 			.item
 				.ui.breadcrumb
@@ -69,11 +101,11 @@ html(lang='en')
 							.ui.icon.input
 								input(type="text",placeholder="Search...",v-model="searchbar")
 								i.search.icon(v-show="!searchbar")
-								i.close.link.icon(v-show="searchbar", v-on:click="searchbar=''")
+								i.close.link.icon(v-show="searchbar", @click="searchbar=''")
 							.right.floated
-								//- button.ui.button(v-on:click="fetch")
+								//- button.ui.button(@click="fetch")
 								//- 	| Update
-								button.ui.labeled.icon.primary.button(v-on:click="create")
+								button.ui.labeled.icon.primary.button(@click="create")
 									i.plus.icon
 									| New Quiz
 				table.ui.selectable.celled.table
@@ -81,14 +113,13 @@ html(lang='en')
 						tr
 							th.one.wide Enable
 							th.four.wide Start time
-							th Title
+							th Name
 					tbody
 						tr(v-for="quiz in filteredQuizzes")
-							// TODO: clickable enable
-							td.selectable.center.aligned.positive(v-if="quiz.enable")
-								i.checkmark.icon
-							td.selectable.center.aligned.negative(v-else)
-								i.close.icon
+							td.selectable.center.aligned(:class="{positive:+quiz.enable,negative:!+quiz.enable}", @click="switchEnable(quiz, !+quiz.enable)")
+								a
+									i.check.icon(v-if="+quiz.enable")
+									i.close.icon(v-else)
 							td.selectable
 								a(:href="'quiz/' + quiz.quiz_id")
 									{{quiz.start_time | timestampToDate}}

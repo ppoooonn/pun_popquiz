@@ -5,6 +5,7 @@ class Admin extends CI_Controller {
 
 	public function __construct() {
 		parent::__construct();
+		// $this->output->enable_profiler(TRUE);
 	}
 
 	public function index() {
@@ -76,19 +77,19 @@ class Admin extends CI_Controller {
 			show_error('Not logged in.', 403);
 		$this->load->model('quiz');
 		$quizzes = $this->quiz->list();
-		echo json_encode([
+
+		$this->output
+        ->set_content_type('application/json')
+        ->set_output(json_encode([
 			'server_time' => time(),
 			'quiz' => $quizzes
-		]);
+		]));
 	}
 	public function api_quiz_create() {
 		if($this->session->admin_login === NULL)
 			show_error('Not logged in.', 403);
 		$this->load->model('quiz');
 		$success = $this->quiz->create('New Quiz');
-		// echo json_encode([
-		// 	'success' => true
-		// ]);
 		$this->api_quiz_list();
 	}
 	public function api_quiz_delete() {
@@ -96,16 +97,60 @@ class Admin extends CI_Controller {
 			show_error('Not logged in.', 403);
 		$this->load->model('quiz');
 		$resp = $this->quiz->delete((int)$this->input->post('quiz_id'));
-		if ($resp)
-			echo json_encode([
+
+		$this->output
+        ->set_content_type('application/json')
+        ->set_output(json_encode(($resp===true)?
+        	[
 				'success' => true
-			]);
-		else
-			echo json_encode([
+			]:[
 				'error' => $resp
-			]);
+			]
+    	));
 	}
-	public function api_quiz_edit($quiz_id) {
+	public function api_quiz_edit() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$quiz_id = (int)$this->input->post('quiz_id');
+		$this->load->model('quiz');
+		$resp = $this->quiz->edit(
+			$quiz_id,
+			[
+				'title' => $this->input->post('title')?:'',
+				'shuffle_flag' => boolval($this->input->post('shuffle_flag')),
+				'enable' => boolval($this->input->post('enable')),
+				'start_time' => (int)$this->input->post('start_time'),
+				'duration' => (int)$this->input->post('duration'),
+				'problem_time' => (int)$this->input->post('problem_time'),
+				'instruction' => $this->input->post('instruction')?:'',
+		]);
+		$quizzes = $this->quiz->list();
+
+		$this->output
+        ->set_content_type('application/json')
+        ->set_output(json_encode([
+			'server_time' => time(),
+			'quiz' => $resp
+		]));
+	}
+	public function api_quiz_enable() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$quiz_id = (int)$this->input->post('quiz_id');
+		$this->load->model('quiz');
+		$resp = $this->quiz->edit(
+			$quiz_id,
+			[
+				'enable' => boolval($this->input->post('enable')),
+		]);
+		$quizzes = $this->quiz->list();
+
+		$this->output
+        ->set_content_type('application/json')
+        ->set_output(json_encode([
+			'server_time' => time(),
+			'quiz' => $resp
+		]));
 	}
 	public function logout() {
 		$this->session->sess_destroy();
