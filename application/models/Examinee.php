@@ -10,7 +10,7 @@ class Examinee extends CI_Model {
 	}
 	public function login($token){
 		$query = $this->db
-		->select(['examinee_id','examinee.quiz_id','examinee.name','quiz.enable','quiz.start_time','quiz.end_time'])
+		->select(['examinee_id','examinee.quiz_id','examinee.name','quiz.enable','quiz.start_time','quiz.duration'])
 		->join('quiz', 'examinee.quiz_id = quiz.quiz_id')
 		->where('login', $token)
 		->get('examinee', 1);
@@ -19,7 +19,7 @@ class Examinee extends CI_Model {
 			return 'Invalid Token';
 		if(!$row->enable)
 			return 'Quiz not available yet';
-		if($row->end_time!=0 && $row->end_time<time())
+		if($row->duration!=0 && $row->start_time!=0 && $row->start_time+$row->duration<time())
 			return 'Quiz has been over';
 		$this->session->examinee_id = $row->examinee_id;
 		$this->session->quiz_id = $row->quiz_id;
