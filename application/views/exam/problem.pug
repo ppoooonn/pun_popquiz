@@ -14,8 +14,7 @@ html(lang='en')
 				.content
 					img.ui.img(src=problem.image_large)
 		nav.ui.fixed.inverted.navbar.menu
-			.left.menu
-				.item= quiz_title+' - '+problem.order +'/'+ problem.count
+			.item= quiz_title+' - '+problem.order +'/'+ problem.count
 			.right.menu
 				.item= name
 				a.item(href=site_url('exam/logout')) Logout
