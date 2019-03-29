@@ -8,10 +8,11 @@ $(function(){
 	$('#start_btn').click(function(){
 		window.location.replace('/exam/problem');
 	});
+	var months_text = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 	var formatDate = function(date){
 		if(+date == 0)
 			return '';
-		return date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+
+		return date.getDate()+' '+months_text[date.getMonth()]+' '+(date.getFullYear()+543)+
 			' '+date.toTimeString().substring(0,5);
 	};
 	var rtime = function (target, duration) {
