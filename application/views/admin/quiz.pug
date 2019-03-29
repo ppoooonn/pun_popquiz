@@ -10,8 +10,7 @@ html(lang='en')
 				var formatDate = function(date){
 					if(+date == 0)
 						return '';
-					return date.getDate()+'/'+(date.getMonth()+1)+'/'+date.getFullYear()+
-						' '+date.toTimeString().substring(0,5);
+					return (date.getFullYear()+543)+'/'+(date.getMonth()+1)+'/'+date.getDate()+' '+date.toTimeString().substring(0,5);
 				};
 				var parseDate = function(str){
 					if(typeof str == 'string'){
@@ -41,7 +40,7 @@ html(lang='en')
 							}
 						}
 						if(date_component && time_component){
-							return new Date(date_component[0], date_component[1]-1, date_component[2], time_component[0], time_component[1]);
+							return new Date(date_component[0]-543, date_component[1]-1, date_component[2], time_component[0], time_component[1]);
 						}
 					}
 					return new Date(str);
@@ -159,6 +158,32 @@ html(lang='en')
 					onChange: function(val){
 						if(+app.start_time != +val)
 							app.setStartTime(val, true);
+					},
+					formatter:{
+						dayHeader: function (date, settings) {
+							return settings.text.months[date.getMonth()] + ' ' + (date.getFullYear()+543);
+						},
+						monthHeader: function (date, settings) {
+							return date.getFullYear()+543;
+						},
+						yearHeader: function (date, settings) {
+							var decadeYear = Math.ceil(date.getFullYear() / 10) * 10;
+							return (decadeYear - 9 + 543) + ' - ' + (decadeYear + 2 + 543);
+						},
+						date: function (date, settings) {
+							if (!date) 
+								return '';
+							return date.getDate() + ' ' + settings.text.months[date.getMonth()]; + ' ' + (date.getFullYear()+543);
+						},
+						cell: function (cell, date, cellOptions) {
+							if(cellOptions.mode == 'year')
+								cell.text(date.getFullYear()+543);
+						}
+					},
+					text: {
+						days: ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'],
+						months: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'],
+						monthsShort: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
 					}
 				});
 				app.setStartTime(app.start_time, true);
@@ -182,12 +207,11 @@ html(lang='en')
 					.ui.red.cancel.button Cancel
 					.ui.green.ok.button Delete
 			nav.ui.fixed.navbar.menu
-				.left.menu
-					.item
-						.ui.breadcrumb
-							a.section(href='/admin/quiz_list') Quiz List
-							i.right.arrow.icon.divider
-							.active.section {{title_field}}
+				.item
+					.ui.breadcrumb
+						a.section(href='/admin/quiz_list') Quiz List
+						i.right.arrow.icon.divider
+						.active.section {{title_field}}
 				.right.menu
 					a.item(href='/admin/logout') Logout
 			main.ui.grid.container
