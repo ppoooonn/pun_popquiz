@@ -16,3 +16,6 @@
 .ui.dimmer.success {
 	background-color: rgba(72, 211, 92, 0.85);
 }
+[v-cloak] {
+	display: none;
+}
