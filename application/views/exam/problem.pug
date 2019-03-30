@@ -7,7 +7,7 @@ html(lang='en')
 			server.offset = server.server_time-Date.now()/1000;
 			server.end_time = (server.end_time - server.offset) * 1000;
 		include common.pug
-		script(src=base_url('static/exam/problem.js'))
+		script(src='/static/exam/problem.js')
 	body
 		if problem.image_large
 			#large-img.ui.fullscreen.modal
@@ -17,7 +17,7 @@ html(lang='en')
 			.item= quiz_title+' - '+problem.order +'/'+ problem.count
 			.right.menu
 				.item= name
-				a.item(href=site_url('exam/logout')) Logout
+				a.item(href=site_url('/exam/logout')) Logout
 		main.ui.page.container
 			#loading
 				.ui.active.dimmer
@@ -28,7 +28,7 @@ html(lang='en')
 				.answer
 					.ui.segment
 						h2.ui.dividing.header#timer Answer
-						form.ui.form#answer-form(action=current_url(), method='POST')
+						form.ui.form#answer-form(action='', method='POST')
 							input(type='hidden',name='problem',value=problem.order)
 							- for(var i=1; i<=problem.choice_count; i++)
 								.field
