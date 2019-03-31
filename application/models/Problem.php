@@ -147,6 +147,30 @@ class Problem extends CI_Model {
 		}
 	}
 
+	public function list($quiz_id){
+		$this->load->database();
+		$result = $this->db
+		->select([
+			'problem_id','!ISNULL(image_main) as image_main','!ISNULL(image_aux) as image_aux','order','choices','correct_choice'
+		])
+		->order_by('order', 'ASC')
+		->order_by('problem_id', 'ASC')
+		->get_where('problems',[
+			'quiz_id' => $quiz_id
+		])->result();
+		// handle exception
+		return $result;
+
+		// if(!$row)
+		// 	return NULL;
+		// $hash = $this->image_hash($examinee_id, $problem_id);
+		// return [
+		// 	'image_main' => site_url(['exam','image',$hash,$problem_id]),
+		// 	'image_aux' => $row->image_aux !== NULL?site_url(['exam','image',$hash,$problem_id.'X']):NULL,
+		// 	'choices' => $row->choices,
+		// ];
+	}
+
 	public function time(){
 		return $this->input->server('REQUEST_TIME');
 	}

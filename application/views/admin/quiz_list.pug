@@ -119,10 +119,8 @@ html(lang='en')
 									i.check.icon(v-if="+quiz.enable")
 									i.close.icon(v-else)
 							td.selectable
-								a(:href="'quiz/' + quiz.quiz_id")
-									{{quiz.start_time | timestampToDate}}
+								a(:href="'quiz/' + quiz.quiz_id") {{quiz.start_time | timestampToDate}}
 							td.selectable
-								a(:href="'quiz/' + quiz.quiz_id")
-									{{quiz.title}}
+								a(:href="'quiz/' + quiz.quiz_id") {{quiz.title}}
 						tr(v-if="quizzes.length == 0")
 							td.center.aligned(colspan=3) No quiz yet.

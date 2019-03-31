@@ -14,8 +14,10 @@ class Admin extends CI_Controller {
 		redirect('/admin/login');
 	}
 	public function login() {
+		$r = $this->input->get('r');
+		$redirect = $r ? '/'.$r  : '/admin/quiz_list';
 		if($this->session->admin_login !== NULL)
-			redirect('/admin/quiz_list');
+			redirect($redirect);
 		if($this->input->post('username') != NULL){
 			$this->load->model('admin_user');
 			$resp = $this->admin_user->login(
@@ -23,16 +25,17 @@ class Admin extends CI_Controller {
 				$this->input->post('password')
 			);
 			if($resp===true)
-				redirect('/admin/quiz-list');
+				redirect($redirect);
 			$this->view($data=[
-				'error_msg'=> ($resp)
+				'error_msg'=> ($resp),
+				'r' => $r
 			]);
 		} else
 			$this->view();
 	}
 	public function quiz_list() {
 		if($this->session->admin_login === NULL)
-			redirect('/admin/login');
+			redirect('/admin/login?r='.uri_string());
 		$this->load->model('quiz');
 		$quizzes = $this->quiz->list();
 		$this->view([
@@ -44,9 +47,9 @@ class Admin extends CI_Controller {
 	}
 	public function quiz($quiz_id) {
 		if($this->session->admin_login === NULL)
-			redirect('/admin/login');
+			redirect('/admin/login?r='.uri_string());
 		$this->load->model('quiz');
-		$quiz = $this->quiz->get((int)$quiz_id);
+		$quiz = $this->quiz->get((int)$quiz_id, true);
 		if(!$quiz)
 			show_404();
 		$this->view([
@@ -59,19 +62,109 @@ class Admin extends CI_Controller {
 	}
 	public function problems($quiz_id) {
 		if($this->session->admin_login === NULL)
-			redirect('/admin/login');
+			redirect('/admin/login?r='.uri_string());
 		$this->load->model('quiz');
 		$quiz = $this->quiz->get((int)$quiz_id);
 		if(!$quiz)
 			show_404();
-		show_404();
+		$this->load->model('problem');
+		$problems = $this->problem->list((int)$quiz_id);
 		$this->view([
 			'script_vars' => json_encode([
 				'server_time' => time(),
-				'quiz' => $quiz
+				'quiz_id' => $quiz->quiz_id,
+				'problems' => $problems
 			]),
+			'quiz' => $quiz
 		]);
 	}
+
+	public function image($problem_id) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$problem_id = (string) $problem_id;
+		if($problem_id === NULL or $problem_id === '')
+			show_404();
+		$aux = false;
+		if($problem_id{-1} == 'X'){
+			$aux = true;
+			$problem_id = substr($problem_id,0,-1);
+		}
+		$problem_id = (int)($problem_id);
+		$this->load->helper('file');
+		$this->load->model('problem');
+
+		$file = $this->problem->get_filename($problem_id, $aux);
+		if($file === NULL)
+			show_404();
+		$file = $this->config->item('data_path').$file;
+		$info = get_file_info($file);
+		$this->output->set_content_type(get_mime_by_extension($info['name']))
+					->set_header('Content-Length: ' . $info['size'])
+					->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', $info['date']).' GMT')
+					->set_header('Cache-Control: no-cache')
+					->set_header('Pragma: no-cache')
+					->set_header('Expires: '.gmdate('D, d M Y H:i:s', time()+30*60).' GMT');
+		if(@strtotime($this->input->server('HTTP_IF_MODIFIED_SINCE')) == $info['date'])
+			$this->output->set_status_header(304);
+		else
+			$this->output->set_output(file_get_contents($info['server_path']));
+	}
+
+	public function upload($problem_id) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		if(!@$_FILES['file'])
+			show_error('No file.',400);
+		// $problem_id = (string) $problem_id;
+		// if($problem_id === NULL or $problem_id === '')
+		// 	show_404();
+		// $aux = false;
+		// if($problem_id{-1} == 'X'){
+		// 	$aux = true;
+		// 	$problem_id = substr($problem_id,0,-1);
+		// }
+		// $problem_id = (int)($problem_id);
+
+		$this->load->helper('file');
+		$config['upload_path']   = $this->config->item('data_path').'temp/';
+		$config['file_name'] = 'p'.$problem_id.'f';
+		$config['allowed_types'] = 'gif|jpg|png|jpeg';
+		$config['overwrite'] = TRUE;
+		$this->load->library('upload', $config);
+
+		if($this->upload->do_upload('file'))
+			$out = ['url' => '/admin/upload_preview/'.$this->upload->data('file_name')];
+		else
+			$out = ['error' => $this->upload->display_errors()];
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode($out));
+	}
+
+	public function upload_preview($file) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->helper('file');
+		if($file === NULL or $file === '')
+			show_404();
+		$file = $this->config->item('data_path').'temp/'.$file;
+		$info = get_file_info($file);
+		if(!$info)
+			show_404();
+		$this->output->set_content_type(get_mime_by_extension($info['name']))
+					->set_header('Content-Length: ' . $info['size'])
+					->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', $info['date']).' GMT')
+					->set_header('Cache-Control: no-cache')
+					->set_header('Pragma: no-cache')
+					->set_header('Expires: '.gmdate('D, d M Y H:i:s', time()+30*60).' GMT');
+		if(@strtotime($this->input->server('HTTP_IF_MODIFIED_SINCE')) == $info['date'])
+			$this->output->set_status_header(304);
+		else
+			$this->output->set_output(file_get_contents($info['server_path']));
+	}
+
+	// API
 	public function api_quiz_list() {
 		if($this->session->admin_login === NULL)
 			show_error('Not logged in.', 403);
@@ -79,8 +172,8 @@ class Admin extends CI_Controller {
 		$quizzes = $this->quiz->list();
 
 		$this->output
-        ->set_content_type('application/json')
-        ->set_output(json_encode([
+		->set_content_type('application/json')
+		->set_output(json_encode([
 			'server_time' => time(),
 			'quiz' => $quizzes
 		]));
@@ -99,9 +192,9 @@ class Admin extends CI_Controller {
 		$resp = $this->quiz->delete((int)$this->input->post('quiz_id'));
 
 		$this->output
-        ->set_content_type('application/json')
-        ->set_output(json_encode(($resp===true)?
-        	[
+		->set_content_type('application/json')
+		->set_output(json_encode(($resp===true)?
+			[
 				'success' => true
 			]:[
 				'error' => $resp
@@ -127,8 +220,8 @@ class Admin extends CI_Controller {
 		$quizzes = $this->quiz->list();
 
 		$this->output
-        ->set_content_type('application/json')
-        ->set_output(json_encode([
+		->set_content_type('application/json')
+		->set_output(json_encode([
 			'server_time' => time(),
 			'quiz' => $resp
 		]));
@@ -146,8 +239,8 @@ class Admin extends CI_Controller {
 		$quizzes = $this->quiz->list();
 
 		$this->output
-        ->set_content_type('application/json')
-        ->set_output(json_encode([
+		->set_content_type('application/json')
+		->set_output(json_encode([
 			'server_time' => time(),
 			'quiz' => $resp
 		]));

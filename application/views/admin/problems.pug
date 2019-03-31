@@ -4,97 +4,234 @@ html(lang='en')
 		title Exam list
 		script.
 			var server = !{script_vars};
-			server.offset = server.server_time-Date.now()/1000;
 		include common.pug
+		script(src='/static/admin/jquery.fileupload.js')
 		script.
-			var getJSON = function(url, cb){fetch(url).then(function(r){return r.json();}).then(cb);};
+			var alphabet = 'ABCDEFGHIJKLMNOP';
 			$(function(){
+				Vue.component('dropdown', {
+					props: {
+						range: Number, 
+						value: {}, 
+						abc: { 
+							type: Boolean,
+							default: false
+						}
+					},
+					template: '#dropdown-template',
+					mounted: function () {
+						var items = [];
+						for(var i=1;i<=this.range;i++)
+							items.push({
+								name: this.abc?alphabet[i-1]:i,
+								value: i,
+								selected: i==this.value
+							});
+						var self = this;
+						$(this.$el).dropdown({
+							values: items ,
+							onChange: function(val){
+								val = +val;
+								if(val && val!=self.value){
+									self.$emit('input', val);
+								}
+							}
+						});
+					},
+					watch: {
+						range: function (newRange) {
+							newRange = +newRange;
+							if(this.value > newRange)
+								this.$emit('input', newRange);
+							var items = [];
+							for(var i=1;i<=newRange;i++)
+								items.push({
+									name: this.abc?alphabet[i-1]:i,
+									value: i,
+									selected: i==this.value
+								});
+							$(this.$el).dropdown('setup menu',{ values: items })
+						},
+						value: function (newValue, oldValue) {
+							if(+newValue != +$(this.$el).dropdown('get value'))
+								$(this.$el).dropdown('set selected', ''+newValue);
+						},
+					},
+					destroyed: function () {
+						$(this.$el).off().remove();
+					}
+				})
 				var app = new Vue({
 					el: 'main',
 					data : {
-						quizzes: server.quiz,
-						searchbar: ''
+						problems: server.problems,
+						new_choices: 4
 					},
 					methods: {
-						// TODO: error
-						update: function(response){
-							if('quiz' in response){
-								this.quizzes = response.quiz;
-							}
-						},
-						fetch: function(){
-							getJSON('api_quiz_list', this.update);
-						},
 						create: function(){
-							getJSON('api_quiz_create', this.update);
+						},
+						zoom: function(e){
+							$('#imgmodal img')
+								.attr('src', $(e.target).attr('src'))
+								.removeClass('hide');
+							$('#imgmodal')
+								.modal('show')
+								.modal('unbind scrollLock');
+						},
+						newImage: function(){
+							$('#imgmodal img').addClass('hide');
+							$('#imgmodal')
+								.modal('show')
+								.modal('unbind scrollLock');
+						},
+						deleteProblem: function(problem, index){
+							var self = this;
+							$('#delete-confirm').modal({
+								duration: 100,
+								onApprove: function(){
+									self.problems.splice(index, 1);
+								}
+							}).modal('show');
 						}
 					},
 					computed: {
-						filteredQuizzes: function(){
-							if(this.searchbar){
-								var needle = this.searchbar.toLocaleLowerCase();
-								var out = [];
-								for (let i of this.quizzes){
-									if(i.title.toLocaleLowerCase().indexOf(needle)!==-1)
-										out.push(i);
-								}
-								return out;
-							} else
-								return this.quizzes;
-						}
+					}
+				});
+				$('#imgmodal .content').click(function(){
+					
+				});
+				$('#imgmodal').modal({
+					onShow:function(){
+						$('#imgmodal .errormsg').text('Paste or drop image here.');
+						setTimeout(function(){
+							$('#imgmodal .overlay').get(0).focus();
+						},0);
 					},
-					filters: {
-						timestampToDate: function(timestamp){
-							if(timestamp==0)
-								return '-';
-							var d = new Date((+timestamp+server.offset)*1000);
-							return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+
-								' '+d.toTimeString().substring(0,8);
+					autofocus: false
+				});
+				$('#imgmodal').on('paste',function(e){
+					e.preventDefault();
+					e.stopPropagation();
+					var items = e.originalEvent.clipboardData.items;
+					if(!items) return;
+					for(var item in items){
+						if(/image/.test(items[item].type)){
+							var file = items[item].getAsFile();
+							$('#fileupload').fileupload('add', {files: file});
+							return;
 						}
+					}
+				});
+				$('#imgmodal .overlay').on('keyup',function(){
+					$(this).text('overlay');
+				});
+				$('#fileupload').fileupload({
+					url: '/admin/upload/1',
+					dataType: 'json',
+					dropZone: $('#imgmodal'),
+					add: function (e, data) {
+						var uploadFile = data.files[0];
+						if (!(/\.(gif|jpg|jpeg|png)$/i).test(uploadFile.name)) {
+							console.log('!!');
+							$('#imgmodal .errormsg').text('ไฟล์รูปเท่านั้น');
+							return;
+						}
+						data.submit();
+					},
+					done: function(e,data){
+						console.log(data.response());
+						$('#imgmodal img')
+							.attr('src', data.response().result.url)
+							.removeClass('hide');
+					},
+					progressall: function (e, data) {
+						var progress = parseInt(data.loaded / data.total * 100, 10);
+						$('#imgmodal .progress').progress('set percent', progress);
 					}
 				});
 			});
 	body
+		script#dropdown-template(type="text/x-template")
+			.ui.fluid.search.selection.dropdown
+				i.dropdown.icon
+				.text
+		#imgmodal.ui.fullscreen.modal
+			.header Change image
+			.content
+				.ui.placeholder.segment
+					.ui.icon.header
+						i.image.icon
+						span.errormsg
+					#upload-btn.ui.primary.labeled.icon.button
+						input#fileupload(type="file",name="file")
+						i.upload.icon
+						| Upload
+					.ui.tiny.progress
+						.bar
+					.overlay(contenteditable="true") overlay
+				img.ui.img
+			.actions
+				//- .ui.red.button Delete
+				//- | &emsp;
+				.ui.cancel.button Cancel
+				.ui.primary.button Change
+		#delete-confirm.ui.mini.modal
+			.header
+				i.trash.alternate.icon
+				| Delete Confirmation
+			.content
+				| ถ้าหากลบแล้วจะไม่สามารถ เรียกคืนข้อมูลได้
+			.actions
+				.ui.red.cancel.button Cancel
+				.ui.green.ok.button Delete
 		nav.ui.fixed.navbar.menu
 			.item
 				.ui.breadcrumb
-					.active.section Quiz List
+					a.section(href='/admin/quiz_list') Quiz List
+					i.right.arrow.icon.divider
+					a.section(href='/admin/quiz/'+quiz.quiz_id)= quiz.title
+					i.right.arrow.icon.divider
+					.active.section Problems
 			.right.menu
 				a.item(href='/admin/logout') Logout
-		main.ui.page.grid.container
+		main.ui.grid.container(v-cloak)
 			.column
-				h1.ui.dividing.header Quiz List
-				.ui.items
-					.item
-						.content
-							.ui.icon.input
-								input(type="text",placeholder="Search...",v-model="searchbar")
-								i.search.icon(v-show="!searchbar")
-								i.close.link.icon(v-show="searchbar", v-on:click="searchbar=''")
-							.right.floated
-								//- button.ui.button(v-on:click="fetch")
-								//- 	| Update
-								button.ui.labeled.icon.primary.button(v-on:click="create")
-									i.plus.icon
-									| New Quiz
-				table.ui.selectable.celled.table
+				h1.ui.dividing.header= quiz.title
+				table.ui.selectable.celled.table.problem-list
 					thead
 						tr
-							th.one.wide Enable
-							th.four.wide Start time
-							th Title
+							th.one.wide ลำดับ
+							th.six.wide รูปคำถาม
+							th.six.wide รูปเพิ่มเติม
+							th.one.wide จำนวนตัวเลือก
+							th.one.wide คำตอบ
 					tbody
-						tr(v-for="quiz in filteredQuizzes")
-							// TODO: clickable enable
-							td.selectable.center.aligned.positive(v-if="quiz.enable")
-								i.checkmark.icon
-							td.selectable.center.aligned.negative(v-else)
-								i.close.icon
-							td.selectable
-								a(:href="'quiz/' + quiz.quiz_id")
-									{{quiz.start_time | timestampToDate}}
-							td.selectable
-								a(:href="'quiz/' + quiz.quiz_id")
-									{{quiz.title}}
-						tr(v-if="quizzes.length == 0")
-							td.center.aligned(colspan=3) No quiz yet.
+						tr(v-for="(problem, index) in problems")
+							td
+								.ui.icon.button
+									i.chevron.up.icon
+								//- p
+								//- 	.ui.icon.button(@click="deleteProblem(problem, index)")
+								//- 		i.trash.icon
+								p
+									.ui.icon.button
+										i.chevron.down.icon
+							td.images
+								img.zoom(v-if="+problem.image_main",:src="'/admin/image/'+problem.problem_id",@click="zoom")
+							td.images
+								img.zoom(v-if="+problem.image_aux",:src="'/admin/image/'+problem.problem_id+'X'",@click="zoom")
+								.ui.big.circular.icon.button(v-else,@click="newImage")
+									i.plus.icon
+							td
+								dropdown(:range=12,v-model="problem.choices")
+							td
+								dropdown(:range="+problem.choices",v-model="problem.correct_choice",abc)
+						tr
+							td New
+							td.images
+								.ui.big.circular.icon.button(@click="newImage")
+									i.plus.icon
+							td.images
+							td
+								dropdown(:range=12,:value=4)
+							td
