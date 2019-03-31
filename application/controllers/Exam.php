@@ -150,11 +150,17 @@ class Exam extends CI_Controller {
 		$file = $this->problem->get_filename($problem_id, $aux);
 		if($file === NULL)
 			show_404();
-		$file = $this->config->item('data_path').$file;
 		$info = get_file_info($file);
 		$this->output->set_content_type(get_mime_by_extension($info['name']))
 					->set_header('Content-Length: ' . $info['size'])
-					->set_output(file_get_contents($info['server_path']));
+					->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', $info['date']).' GMT')
+					->set_header('Cache-Control: no-cache')
+					->set_header('Pragma: no-cache')
+					->set_header('Expires: '.gmdate('D, d M Y H:i:s', time()+30*60).' GMT');
+		if(@strtotime($this->input->server('HTTP_IF_MODIFIED_SINCE')) == $info['date'])
+			$this->output->set_status_header(304);
+		else
+			$this->output->set_output(file_get_contents($info['server_path']));
 	}
 	public function logout() {
 		$this->session->sess_destroy();
