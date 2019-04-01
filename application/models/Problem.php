@@ -1,7 +1,10 @@
 <?php
 class Problem extends CI_Model {
-	public function get_filename($problem_id, $aux=false){
+	public function __construct()
+	{
 		$this->load->database();
+	}
+	public function get_filename($problem_id, $aux=false){
 		$row = $this->db
 		->select($aux?'image_aux':'image_main')
 		->get_where('problems',[
@@ -15,7 +18,6 @@ class Problem extends CI_Model {
 		return substr(hash("sha256", $examinee_id.':'.$problem_id.':'.$this->config->item('salt')),64-16);
 	}
 	public function get_problem_info($examinee_id, $problem_id){
-		$this->load->database();
 		$row = $this->db
 		->select(['image_aux','choices'])
 		->get_where('problems',[
@@ -25,14 +27,13 @@ class Problem extends CI_Model {
 			return NULL;
 		$hash = $this->image_hash($examinee_id, $problem_id);
 		return [
-			'image_main' => site_url(['exam','image',$hash,$problem_id]),
-			'image_aux' => $row->image_aux !== NULL?site_url(['exam','image',$hash,$problem_id.'X']):NULL,
+			'image_main' => '/exam/image/'.$hash.'/'.$problem_id,
+			'image_aux' => $row->image_aux !== NULL?'/exam/image/'.$hash.'/'.$problem_id.'X':NULL,
 			'choices' => $row->choices,
 		];
 	}
 
 	public function get_seen_problems($quiz_id, $examinee_id){
-		$this->load->database();
 		$query = $this->db
 		->select(['problems.problem_id', 'answers.start_time', 'answers.submit_time'])
 		->join('answers','problems.problem_id = answers.problem_id and answers.examinee_id = '.$this->db->escape($examinee_id),'left')
@@ -52,7 +53,6 @@ class Problem extends CI_Model {
 	}
 
 	public function start_problem($examinee_id, $problem_id, $problem_timer=30, $loading_timer=60){
-		$this->load->database();
 		$row = $this->db
 		->select(['start_time', 'loaded_time', 'submit_time'])
 		->get_where('answers',[
@@ -94,7 +94,6 @@ class Problem extends CI_Model {
 	}
 
 	public function save_answer($examinee_id, $problem_id, $answer, $problem_timer=30, $loading_timer=60){
-		$this->load->database();
 		$row = $this->db
 		->select(['start_time', 'loaded_time', 'submit_time'])
 		->get_where('answers',[
@@ -124,7 +123,6 @@ class Problem extends CI_Model {
 	}
 
 	public function load_problem($examinee_id, $problem_id, $loading_timer=60){
-		$this->load->database();
 		$row = $this->db
 		->select(['loaded_time'])
 		->get_where('answers',[
@@ -148,7 +146,6 @@ class Problem extends CI_Model {
 	}
 
 	public function list($quiz_id){
-		$this->load->database();
 		$result = $this->db
 		->select([
 			'problem_id','!ISNULL(image_main) as image_main','!ISNULL(image_aux) as image_aux','order','choices','correct_choice'
@@ -160,15 +157,56 @@ class Problem extends CI_Model {
 		])->result();
 		// handle exception
 		return $result;
+	}
+	public function get_admin($problem_id, $image=NULL){
+		$row = $this->db
+		->select($image?[
+			'problem_id','image_main','image_aux','order','choices','correct_choice'
+		]:[
+			'problem_id','!ISNULL(image_main) as image_main','!ISNULL(image_aux) as image_aux','order','choices','correct_choice'
+		])
+		->get_where('problems',[
+			'problem_id' => $problem_id
+		])->row();
+		return $row;
+	}
+	public function create($quiz_id, $payload){
+		$payload['quiz_id'] = $quiz_id;
+		$this->db
+		->insert('problems',$payload);
+		return $this->db->insert_id();
+	}
+	public function edit($problem_id, $data){
+		$this->db
+		->where('problem_id', $problem_id)
+		->update('problems', $data);
+		return $this->get_admin($problem_id);
+	}
+	public function delete($problem_id){
+		$this->db
+		->delete('problems',[
+			'problem_id' => $problem_id
+		]);
+		return true;
+	}
 
-		// if(!$row)
-		// 	return NULL;
-		// $hash = $this->image_hash($examinee_id, $problem_id);
-		// return [
-		// 	'image_main' => site_url(['exam','image',$hash,$problem_id]),
-		// 	'image_aux' => $row->image_aux !== NULL?site_url(['exam','image',$hash,$problem_id.'X']):NULL,
-		// 	'choices' => $row->choices,
-		// ];
+	public function get_scores($quiz_id){
+		$result = $this->db
+		->select(['examinee.examinee_id as id', 'examinee.name as name', 'count(answers.answer) as answered', 'sum(answers.answer = problems.correct_choice) as correct'])
+		->join('answers','examinee.examinee_id = answers.examinee_id')
+		->join('problems','problems.problem_id = answers.problem_id')
+		->where('examinee.quiz_id' , $quiz_id)
+		->group_by('examinee.examinee_id')
+		->get('examinee')->result();
+		$output = "DBID,Name,Answered,Correct\n";
+		foreach ($result as $row){
+			$output .= 
+				$row->id .',"'.
+				$row->name .'",'.
+				$row->answered .','.
+				$row->correct ."\n";
+		}
+		return $output;
 	}
 
 	public function time(){

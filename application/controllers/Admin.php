@@ -110,31 +110,38 @@ class Admin extends CI_Controller {
 		else
 			$this->output->set_output(file_get_contents($info['server_path']));
 	}
+	public function scores($quiz_id) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('problem');
+		$this->output->set_content_type('text/csv')
+					->set_header('Content-Disposition: attachment; filename="score.csv"')
+					->set_output($this->problem->get_scores((int)$quiz_id));
+	}
 
-	public function upload($problem_id) {
+
+	public function upload() {
+		// TODO: multi-user
 		if($this->session->admin_login === NULL)
 			show_error('Not logged in.', 403);
 		if(!@$_FILES['file'])
 			show_error('No file.',400);
-		// $problem_id = (string) $problem_id;
-		// if($problem_id === NULL or $problem_id === '')
-		// 	show_404();
-		// $aux = false;
-		// if($problem_id{-1} == 'X'){
-		// 	$aux = true;
-		// 	$problem_id = substr($problem_id,0,-1);
-		// }
-		// $problem_id = (int)($problem_id);
+		$quiz_id = (string) $this->input->post('quiz_id');
+		$problem_id = (string) $this->input->post('problem_id');
+		if(!$problem_id)
+			$problem_id = 'new';
+		$aux = false;
 
 		$this->load->helper('file');
 		$config['upload_path']   = $this->config->item('data_path').'temp/';
-		$config['file_name'] = 'p'.$problem_id.'f';
+		$config['file_name'] = 'Q'.$quiz_id.'p'.$problem_id.'f';
 		$config['allowed_types'] = 'gif|jpg|png|jpeg';
-		$config['overwrite'] = TRUE;
+		$config['overwrite'] = $problem_id=='new'?FALSE:TRUE;
 		$this->load->library('upload', $config);
 
 		if($this->upload->do_upload('file'))
-			$out = ['url' => '/admin/upload_preview/'.$this->upload->data('file_name')];
+			$out = ['url' => '/admin/upload_preview/'.$this->upload->data('file_name'),
+					'filename' => $this->upload->data('file_name')];
 		else
 			$out = ['error' => $this->upload->display_errors()];
 		$this->output
@@ -165,6 +172,104 @@ class Admin extends CI_Controller {
 	}
 
 	// API
+	public function api_problem_set() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+
+		$quiz_id = (int)$this->input->post('quiz_id'); // TODO: check exists
+		$problem_id = (int)$this->input->post('problem_id');
+		$image_main = $this->input->post('image_main')?:'';
+		if(!$problem_id && (!$quiz_id || $image_main == ''))
+			show_error('Bad param', 400);
+		$image_aux = $this->input->post('image_aux')?:'';
+		$choices = (int)$this->input->post('choices');
+		$correct_choice = (int)$this->input->post('correct_choice');
+
+		$this->load->model('problem');
+		$froot = $this->config->item('data_path');
+
+		$payload = [];
+		if($choices)
+			$payload['choices'] = $choices;
+		if($correct_choice){ // TODO: check > choice
+			$payload['correct_choice'] = $correct_choice;
+		}
+		if(!$problem_id){
+			$payload['image_main'] = '';
+			$problem_id = $this->problem->create($quiz_id, $payload);
+			$oldprob = NULL;
+		}else{
+			$oldprob = $this->problem->get_admin($problem_id, true);
+		}
+		if($image_main){
+			if(strpos($image_main, '/') !== false)
+				show_error('Slash in filename.', 400);
+			$temppath = $froot.'temp/'.$image_main;
+			if(!file_exists($temppath))
+				show_error('File not found.', 400);
+			@mkdir($froot.'Q'.$quiz_id);
+			$image_main = 'Q'.$quiz_id.'/p'.$problem_id.'f.'.pathinfo($image_main, PATHINFO_EXTENSION);
+			if($oldprob && $oldprob->image_main && $oldprob->image_main != $froot.$image_main)
+				@unlink($froot.$oldprob->image_main);
+			rename($temppath, $froot.$image_main);
+			$payload['image_main'] = $image_main;
+		}
+		if($image_aux){
+			if($image_aux == '/remove/')
+				$payload['image_aux'] = NULL;
+			else {
+				if(strpos($image_aux, '/') !== false)
+					show_error('Slash in filename.', 400);
+				$temppath = $froot.'temp/'.$image_aux;
+				if(!file_exists($temppath))
+					show_error('File not found.', 400);
+				$image_aux = 'Q'.$quiz_id.'/p'.$problem_id.'x.'.pathinfo($image_aux, PATHINFO_EXTENSION);
+				if($oldprob && $oldprob->image_aux && $oldprob->image_aux != $froot.$image_aux)
+					@unlink($froot.$oldprob->image_aux);
+				rename($temppath, $froot.$image_aux);
+				$payload['image_aux'] = $image_aux;
+			}
+		}
+
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode([
+			'server_time' => time(),
+			'problem' => $this->problem->edit($problem_id, $payload) //TODO: send feedback
+		]));
+	}
+	public function api_problem_delete() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+
+		$this->load->model('problem');
+		$row = $this->problem->get_admin((int)$this->input->post('problem_id'),true);
+		if(!$row)
+			show_error('Bad param',400);
+		if($row->image_main)
+			@unlink($this->config->item('data_path').$row->image_main);
+		if($row->image_aux)
+			@unlink($this->config->item('data_path').$row->image_aux);
+		$resp = $this->problem->delete((int)$this->input->post('problem_id'));
+
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode(($resp===true)?
+			[
+				'success' => true
+			]:[
+				'error' => $resp
+			]
+		));
+	}
+	public function api_preview_cancel() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$filename = $this->input->post('filename')?:'';
+		if($filename == '' or strpos($filename, '/') !== false)
+			show_error('Bad filename.', 400);
+		@unlink($this->config->item('data_path').'temp/'.$filename);
+	}
 	public function api_quiz_list() {
 		if($this->session->admin_login === NULL)
 			show_error('Not logged in.', 403);

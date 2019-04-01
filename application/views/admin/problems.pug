@@ -34,6 +34,7 @@ html(lang='en')
 								val = +val;
 								if(val && val!=self.value){
 									self.$emit('input', val);
+									self.$emit('change', val);
 								}
 							}
 						});
@@ -61,16 +62,17 @@ html(lang='en')
 						$(this.$el).off().remove();
 					}
 				})
-				var app = new Vue({
+				window.app = new Vue({
 					el: 'main',
 					data : {
-						problems: server.problems,
+						problems: server.problems?server.problems:[],
 						new_choices: 4
 					},
 					methods: {
 						create: function(){
 						},
-						zoom: function(e){
+						zoom: function(e, problem_id, aux){
+							fileupload_data = {problem_id:problem_id,aux:aux};
 							$('#imgmodal img')
 								.attr('src', $(e.target).attr('src'))
 								.removeClass('hide');
@@ -78,18 +80,42 @@ html(lang='en')
 								.modal('show')
 								.modal('unbind scrollLock');
 						},
-						newImage: function(){
+						newImage: function(problem_id, aux){
+							fileupload_data = {problem_id:problem_id,aux:aux};
 							$('#imgmodal img').addClass('hide');
 							$('#imgmodal')
 								.modal('show')
 								.modal('unbind scrollLock');
+						},
+						updateChoice: function(problem){
+							setTimeout(function(){
+								$.post({
+									url: '/admin/api_problem_set',
+									data: {
+										problem_id: +problem.problem_id,
+										choices: +problem.choices,
+										correct_choice: +problem.correct_choice
+									},
+									success: function(resp){},
+									dataType: 'json'
+								});
+							},0);
 						},
 						deleteProblem: function(problem, index){
 							var self = this;
 							$('#delete-confirm').modal({
 								duration: 100,
 								onApprove: function(){
-									self.problems.splice(index, 1);
+									$.post({
+										url: '/admin/api_problem_delete',
+										data: {
+											problem_id: problem.problem_id
+										},
+										success: function(resp){
+											self.problems.splice(index, 1);
+										},
+										dataType: 'json'
+									});
 								}
 							}).modal('show');
 						}
@@ -97,19 +123,70 @@ html(lang='en')
 					computed: {
 					}
 				});
-				$('#imgmodal .content').click(function(){
-					
-				});
 				$('#imgmodal').modal({
 					onShow:function(){
+						fileupload_data.open = 1;
 						$('#imgmodal .errormsg').text('Paste or drop image here.');
 						setTimeout(function(){
 							$('#imgmodal .overlay').get(0).focus();
 						},0);
 					},
+					onHidden: function(){
+						fileupload_data = {};
+					},
+					onDeny: function(){ // TODO:catch all deny
+						if(fileupload_data.filename){
+							$.post({
+								url: '/admin/api_preview_cancel',
+								data: {filename: fileupload_data.filename}
+							});
+						}
+						return true;
+					},
+					onApprove: function(){
+						if(fileupload_data.filename){
+							var isnew = fileupload_data.problem_id == 0;
+							var isaux = fileupload_data.aux;
+							var payload = {
+								quiz_id: server.quiz_id,
+								problem_id: fileupload_data.problem_id,
+							};
+							if(isaux)
+								payload.image_aux = fileupload_data.filename;
+							else
+								payload.image_main = fileupload_data.filename;
+							if(isnew){
+								payload.choices = +app.new_choices;
+							}
+							$.post({
+								url: '/admin/api_problem_set',
+								data: payload,
+								success: function(resp){
+									if('problem' in resp){
+										if(isnew){
+											app.problems.push(resp.problem);
+										}else{
+											var p = 0;
+											for(var p = 0;p<app.problems.length;p++){
+												if(app.problems[p].problem_id == resp.problem.problem_id){
+													for(var i in resp.problem)
+														app.problems[p][i] = resp.problem[i];
+													app.problems[p][isaux?'image_aux':'image_main'] += Math.random();
+												}
+											}
+										}
+									}
+								},
+								dataType: 'json'
+							});
+						}
+						return true;
+					},
 					autofocus: false
 				});
-				$('#imgmodal').on('paste',function(e){
+				$(window).on('paste',function(e){
+					if(!fileupload_data.open)
+						return true;
 					e.preventDefault();
 					e.stopPropagation();
 					var items = e.originalEvent.clipboardData.items;
@@ -125,29 +202,37 @@ html(lang='en')
 				$('#imgmodal .overlay').on('keyup',function(){
 					$(this).text('overlay');
 				});
+				var fileupload_data = {};
 				$('#fileupload').fileupload({
-					url: '/admin/upload/1',
+					url: '/admin/upload',
 					dataType: 'json',
 					dropZone: $('#imgmodal'),
+					sequentialUploads: true,
+					formData: function(){return [
+						{name:'problem_id', value:fileupload_data.problem_id},
+						{name:'quiz_id', value: server.quiz_id}
+					];},
 					add: function (e, data) {
 						var uploadFile = data.files[0];
 						if (!(/\.(gif|jpg|jpeg|png)$/i).test(uploadFile.name)) {
-							console.log('!!');
 							$('#imgmodal .errormsg').text('ไฟล์รูปเท่านั้น');
 							return;
 						}
 						data.submit();
 					},
 					done: function(e,data){
-						console.log(data.response());
+						fileupload_data.filename = data.response().result.filename;
 						$('#imgmodal img')
-							.attr('src', data.response().result.url)
+							.attr('src', data.response().result.url+'?'+Math.random())
 							.removeClass('hide');
 					},
 					progressall: function (e, data) {
 						var progress = parseInt(data.loaded / data.total * 100, 10);
 						$('#imgmodal .progress').progress('set percent', progress);
 					}
+				});
+				$('#imgmodal img').on('load',function(){
+					$('#imgmodal').resize();
 				});
 			});
 	body
@@ -174,7 +259,7 @@ html(lang='en')
 				//- .ui.red.button Delete
 				//- | &emsp;
 				.ui.cancel.button Cancel
-				.ui.primary.button Change
+				.ui.primary.ok.button Change
 		#delete-confirm.ui.mini.modal
 			.header
 				i.trash.alternate.icon
@@ -200,7 +285,9 @@ html(lang='en')
 				table.ui.selectable.celled.table.problem-list
 					thead
 						tr
-							th.one.wide ลำดับ
+							//- TODO ลบ + ลำดับ
+							//- TODO ลบ image_aux
+							th.one.wide ลบ
 							th.six.wide รูปคำถาม
 							th.six.wide รูปเพิ่มเติม
 							th.one.wide จำนวนตัวเลือก
@@ -208,28 +295,30 @@ html(lang='en')
 					tbody
 						tr(v-for="(problem, index) in problems")
 							td
-								.ui.icon.button
-									i.chevron.up.icon
-								//- p
-								//- 	.ui.icon.button(@click="deleteProblem(problem, index)")
-								//- 		i.trash.icon
+								// .ui.icon.button
+								// 	i.chevron.up.icon
 								p
-									.ui.icon.button
-										i.chevron.down.icon
+									.ui.icon.button(@click="deleteProblem(problem, index)")
+										i.trash.icon
+							// 	p
+							// 		.ui.icon.button
+							// 			i.chevron.down.icon
 							td.images
-								img.zoom(v-if="+problem.image_main",:src="'/admin/image/'+problem.problem_id",@click="zoom")
+								img.zoom(v-if="+problem.image_main",:src="'/admin/image/'+problem.problem_id+(+problem.image_main!=1?'?'+problem.image_main:'')",@click="zoom($event, +problem.problem_id)")
 							td.images
-								img.zoom(v-if="+problem.image_aux",:src="'/admin/image/'+problem.problem_id+'X'",@click="zoom")
-								.ui.big.circular.icon.button(v-else,@click="newImage")
+								img.zoom(v-if="+problem.image_aux",:src="'/admin/image/'+problem.problem_id+'X'+(+problem.image_aux!=1?'?'+problem.image_aux:'')",@click="zoom($event, +problem.problem_id, 1)")
+								.ui.big.circular.icon.button(v-else,@click="newImage(+problem.problem_id, 1)")
 									i.plus.icon
 							td
-								dropdown(:range=12,v-model="problem.choices")
+								dropdown(:range=12,v-model="problem.choices",@change="updateChoice(problem)")
 							td
-								dropdown(:range="+problem.choices",v-model="problem.correct_choice",abc)
+								dropdown(:range="+problem.choices",v-model="problem.correct_choice",abc,@change="updateChoice(problem)")
 						tr
-							td New
+							td
+								.ui.icon
+									i.big.edit.icon
 							td.images
-								.ui.big.circular.icon.button(@click="newImage")
+								.ui.big.circular.icon.button(@click="newImage(0)")
 									i.plus.icon
 							td.images
 							td

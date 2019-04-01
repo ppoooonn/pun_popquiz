@@ -17,7 +17,7 @@ html(lang='en')
 			.item= quiz_title+' - '+problem.order +'/'+ problem.count
 			.right.menu
 				.item= name
-				a.item(href=site_url('/exam/logout')) Logout
+				a.item(href='/exam/logout') Logout
 		main.ui.page.container
 			#loading
 				.ui.active.dimmer
@@ -34,5 +34,5 @@ html(lang='en')
 								.field
 									.ui.radio.checkbox
 										input(type='radio',name='choice',value=i)
-										label= i
+										label= abc(i)
 							button.ui.primary.button(type='submit',disabled) Submit

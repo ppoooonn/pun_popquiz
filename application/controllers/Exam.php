@@ -106,6 +106,7 @@ class Exam extends CI_Controller {
 					'problem_timer' => $this->session->quiz_timer,
 					'problem_order' => $problem_order,
 				]),
+				'abc'=> function($x){ return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[$x-1];}
 			]);
 		}
 	}
@@ -150,6 +151,7 @@ class Exam extends CI_Controller {
 		$file = $this->problem->get_filename($problem_id, $aux);
 		if($file === NULL)
 			show_404();
+		$file = $this->config->item('data_path').$file;
 		$info = get_file_info($file);
 		$this->output->set_content_type(get_mime_by_extension($info['name']))
 					->set_header('Content-Length: ' . $info['size'])
