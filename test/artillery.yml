@@ -1,0 +1,26 @@
+config:
+  target: 'http://127.0.0.2:2271'
+  phases:
+    - duration: 1
+      arrivalRate: 500
+  defaults:
+    gzip: true
+  timeout: 5
+scenarios:
+  - flow:
+    - get:
+        url: "/"
+    - get:
+        url: "/static/exam/pack.css"
+    - get:
+        url: "/static/exam/exam.css"
+    - get:
+        url: "/static/exam/pack.js"
+    - post:
+        url: "/"
+        form: 
+          token: yyyy
+    - get:
+        url: "/exam/lounge"
+    - get:
+        url: "/static/exam/lounge.js"
