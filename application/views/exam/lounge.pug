@@ -18,10 +18,8 @@ html(lang='en')
 				h1.ui.dividing.header.quiz-title= quiz_title
 				.instruction= instruction
 				.ui.divider
-				p
-					.ui.checkbox
-						input#agree(type="checkbox")
-						label ข้าพเจ้าได้อ่านและรับทราบข้อกำหนดของการสอบแล้ว
-					button.ui.large.green.button.hide#start_btn Start
-				p
-					#timer Loading...
+				.ui.checkbox#agree
+					input(type="checkbox")
+					label ข้าพเจ้าได้อ่านและรับทราบข้อกำหนดของการสอบแล้ว
+				button.ui.large.green.button.hide#start_btn Start
+				#timer Loading...

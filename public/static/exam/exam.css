@@ -52,3 +52,13 @@ img.zoom {
 .instruction {
 	white-space: pre;
 }
+#agree {
+	display: block;
+	transition: height 150ms ease-out;
+	overflow: hidden;
+	height: 2rem;
+	min-height: 0;
+}
+#agree.slide {
+	height: 0rem;
+}

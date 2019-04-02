@@ -1,8 +1,8 @@
 $(function(){
 	var ready = false;
-	$('#agree').change(function(){
+	$('#agree input').change(function(){
 		ready = true;
-		$('#agree').parent().addClass('hide');
+		$('#agree').addClass('slide');
 		update();
 	});
 	$('#start_btn').click(function(){
@@ -50,7 +50,7 @@ $(function(){
 				window.location.replace('/exam/problem');
 			else{
 				$('#start_btn').removeClass('hide');
-				$('#agree').parent().addClass('hide');
+				$('#agree').addClass('hide');
 				$('#timer').addClass('hide');
 			}
 		}
