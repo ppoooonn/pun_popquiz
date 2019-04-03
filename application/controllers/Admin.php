@@ -1,7 +1,6 @@
 <?php
 
 class Admin extends CI_Controller {
-	use CiPug;
 
 	public function __construct() {
 		parent::__construct();
