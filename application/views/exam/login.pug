@@ -9,8 +9,8 @@ html(lang='en')
 		main.ui.page.grid.container
 			.column
 				h2.ui.dividing.header Login
-				form.ui.form(action='', method='POST', class=$error_msg?'error':'')
-					.ui.error.message= error_msg
+				form.ui.form(action='', method='POST', class!="<?= $error_msg?'error':'' ?>")
+					.ui.error.message <?= htmlspecialchars($error_msg?:'') ?>
 					.field
 						label Token
 						input(type='text', name='token', autocomplete='off')

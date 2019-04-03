@@ -3,7 +3,7 @@ html(lang='en')
 	head
 		title Exam list
 		script.
-			var server = !{script_vars};
+			var server = <?= $script_vars ?>;
 		include common.pug
 		script.
 			$(function(){

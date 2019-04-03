@@ -10,8 +10,8 @@ html(lang='en')
 		main.ui.page.grid.container
 			.column
 				h2.ui.dividing.header ผู้ดูแลระบบ
-				form.ui.form(action=($r?'?r='.$r:''), method='POST', class=$error_msg?'error':'')
-					.ui.error.message= error_msg
+				form.ui.form(action!="<?= $r?'?r='.$r:'' ?>", method='POST', class!="<?= $error_msg?'error':'' ?>")
+					.ui.error.message <?= htmlspecialchars($error_msg?:'') ?>
 					.field
 						label Username
 						input(type='text', name='username')

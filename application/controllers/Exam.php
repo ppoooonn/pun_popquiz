@@ -24,18 +24,20 @@ class Exam extends CI_Controller {
 			);
 			if($resp===true)
 				redirect('/exam/lounge');
-			$this->view($data=[
+			$this->load->view('exam/login',$data=[
 				'error_msg'=> ($resp)
 			]);
 		} else
-			$this->view();
+			$this->load->view('exam/login',$data=[
+				'error_msg'=> NULL
+			]);
 	}
 	public function lounge() {
 		if($this->session->examinee_id === NULL)
 			redirect('/exam/login');
 		$this->load->model('quiz');
 		$quiz = $this->quiz->get($this->session->quiz_id, true);
-		$this->view([
+		$this->load->view('exam/lounge',[
 			'name' => $this->session->name,
 			'quiz_title' => $quiz->title,
 			'script_vars' => json_encode([
@@ -88,7 +90,7 @@ class Exam extends CI_Controller {
 			else
 				redirect('/exam/problem/'.($problem_order + 1));
 		} else {
-			$this->view([
+			$this->load->view('exam/problem',[
 				'name' => $this->session->name,
 				'quiz_title' => $this->session->quiz_title,
 				'problem' => [
@@ -125,7 +127,7 @@ class Exam extends CI_Controller {
 	public function finish() {
 		if($this->session->examinee_id === NULL)
 			redirect('/exam/login');
-		$this->view([
+		$this->load->view('exam/finish',[
 			'name' => $this->session->name,
 			'quiz_title' => $this->session->quiz_title,
 		]);

@@ -3,7 +3,7 @@ html(lang='en')
 	head
 		title Exam list
 		script.
-			var server = !{script_vars};
+			var server = <?= $script_vars ?>;
 		include common.pug
 		script.
 			$(function(){
@@ -221,15 +221,15 @@ html(lang='en')
 							.ui.segment
 								h2.ui.dividing.header Action
 								p
-									a.ui.labeled.icon.button.big.teal(href="/admin/problems/"+quiz_id)
+									a.ui.labeled.icon.button.big.teal(:href="'/admin/problems/'+store.quiz_id")
 										i.edit.icon
 										| คำถาม
 								p
-									a.ui.labeled.icon.button.big.teal(href="/admin/examinee/"+quiz_id)
+									a.ui.labeled.icon.button.big.teal(:href="'/admin/examinee/'+store.quiz_id")
 										i.user.icon
 										| รายชื่อผู้เข้าสอบ
 								p
-									a.ui.labeled.icon.button.big.teal(href="/admin/scores/"+quiz_id)
+									a.ui.labeled.icon.button.big.teal(:href="'/admin/scores/'+store.quiz_id")
 										i.download.icon
 										| ดาวน์โหลดคะแนน
 						.ten.wide.column

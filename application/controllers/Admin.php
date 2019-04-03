@@ -26,19 +26,22 @@ class Admin extends CI_Controller {
 			);
 			if($resp===true)
 				redirect($redirect);
-			$this->view($data=[
+			$this->load->view('admin/login',$data=[
 				'error_msg'=> ($resp),
 				'r' => $r
 			]);
 		} else
-			$this->view();
+			$this->load->view('admin/login',$data=[
+				'error_msg'=> NULL,
+				'r' => NULL
+			]);
 	}
 	public function quiz_list() {
 		if($this->session->admin_login === NULL)
 			redirect('/admin/login?r='.uri_string());
 		$this->load->model('quiz');
 		$quizzes = $this->quiz->list();
-		$this->view([
+		$this->load->view('admin/quiz_list',[
 			'script_vars' => json_encode([
 				'server_time' => time(),
 				'quiz' => $quizzes
@@ -52,7 +55,7 @@ class Admin extends CI_Controller {
 		$quiz = $this->quiz->get((int)$quiz_id, true);
 		if(!$quiz)
 			show_404();
-		$this->view([
+		$this->load->view('admin/quiz',[
 			'script_vars' => json_encode([
 				'server_time' => time(),
 				'quiz' => $quiz
@@ -69,11 +72,29 @@ class Admin extends CI_Controller {
 			show_404();
 		$this->load->model('problem');
 		$problems = $this->problem->list((int)$quiz_id);
-		$this->view([
+		$this->load->view('admin/problems',[
 			'script_vars' => json_encode([
 				'server_time' => time(),
 				'quiz_id' => $quiz->quiz_id,
 				'problems' => $problems
+			]),
+			'quiz' => $quiz
+		]);
+	}
+	public function examinee($quiz_id) {
+		if($this->session->admin_login === NULL)
+			redirect('/admin/login?r='.uri_string());
+		$this->load->model('quiz');
+		$quiz = $this->quiz->get((int)$quiz_id);
+		if(!$quiz)
+			show_404();
+		$this->load->model('examinee');
+		$examinee = $this->examinee->list((int)$quiz_id);
+		$this->load->view('admin/examinee',[
+			'script_vars' => json_encode([
+				'server_time' => time(),
+				'quiz_id' => $quiz->quiz_id,
+				'examinee' => $examinee
 			]),
 			'quiz' => $quiz
 		]);

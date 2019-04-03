@@ -3,7 +3,7 @@ html(lang='en')
 	head
 		title Exam prepare
 		script.
-			var server = !{script_vars};
+			var server = <?= $script_vars ?>;
 			server.offset = server.server_time-Date.now()/1000;
 		include common.pug
 		script(src='/static/exam/lounge.js')
@@ -11,12 +11,12 @@ html(lang='en')
 		nav.ui.fixed.inverted.navbar.menu
 			.item PopQuiz
 			.right.menu
-				.item= name
+				.item <?= htmlspecialchars($name) ?>
 				a.item(href='/exam/logout') Logout
 		main.ui.page.grid.container
 			.column
-				h1.ui.dividing.header.quiz-title= quiz_title
-				.instruction= instruction
+				h1.ui.dividing.header.quiz-title <?= htmlspecialchars($quiz_title) ?>
+				.instruction <?= htmlspecialchars($instruction) ?>
 				.ui.divider
 				.ui.checkbox#agree
 					input(type="checkbox")

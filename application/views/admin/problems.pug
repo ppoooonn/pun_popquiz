@@ -3,7 +3,7 @@ html(lang='en')
 	head
 		title Exam list
 		script.
-			var server = !{script_vars};
+			var server = <?= $script_vars ?>;
 		include common.pug
 		script(src='/static/admin/jquery.fileupload.js')
 		script.
@@ -274,14 +274,14 @@ html(lang='en')
 				.ui.breadcrumb
 					a.section(href='/admin/quiz_list') Quiz List
 					i.right.arrow.icon.divider
-					a.section(href='/admin/quiz/'+quiz.quiz_id)= quiz.title
+					a.section(href!="<?= '/admin/quiz/'.($quiz->quiz_id) ?>") <?= htmlspecialchars($quiz->title) ?>
 					i.right.arrow.icon.divider
 					.active.section Problems
 			.right.menu
 				a.item(href='/admin/logout') Logout
 		main.ui.grid.container(v-cloak)
 			.column
-				h1.ui.dividing.header= quiz.title
+				h1.ui.dividing.header <?= htmlspecialchars($quiz->title) ?>
 				table.ui.selectable.celled.table.problem-list
 					thead
 						tr

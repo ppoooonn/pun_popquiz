@@ -1,22 +1,23 @@
 doctype html
 html(lang='en')
 	head
-		title= problem.order +'/'+ problem.count +' - '+ quiz_title
+		title <?= $problem['order'] .'/'. $problem['count'] .' - '. htmlspecialchars($quiz_title) ?>
 		script.
-			var server = !{script_vars};
+			var server = <?= $script_vars ?>;
 			server.offset = server.server_time-Date.now()/1000;
 			server.end_time = (server.end_time - server.offset) * 1000;
 		include common.pug
 		script(src='/static/exam/problem.js')
 	body
-		if problem.image_large
-			#large-img.ui.fullscreen.modal
-				.content
-					img.ui.img(src=problem.image_large)
+		| <?php if($problem['image_large']) { ?>
+		#large-img.ui.fullscreen.modal
+			.content
+				img.ui.img(src!="<?= $problem['image_large'] ?>")
+		| <?php } ?>
 		nav.ui.fixed.inverted.navbar.menu
-			.item= quiz_title+' - '+problem.order +'/'+ problem.count
+			.item <?= htmlspecialchars($quiz_title).' - '.$problem['order'] .'/'. $problem['count'] ?>
 			.right.menu
-				.item= name
+				.item <?= htmlspecialchars($name) ?>
 				a.item(href='/exam/logout') Logout
 		main.ui.page.container
 			#loading
@@ -24,15 +25,17 @@ html(lang='en')
 					.ui.text.loader Loading...
 			#content.hide
 				.problem
-					img.ui.img(src=problem.image, class=problem.image_large?'zoom':'')
+					img.ui.img(src!="<?= $problem['image'] ?>", class!="<?= $problem['image_large']?'zoom':'' ?>")
 				.answer
 					.ui.segment
 						h2.ui.dividing.header#timer Answer
 						form.ui.form#answer-form(action='', method='POST')
-							input(type='hidden',name='problem',value=problem.order)
-							- for(var i=1; i<=problem.choice_count; i++)
-								.field
-									.ui.radio.checkbox
-										input(type='radio',name='choice',value=i)
-										label= abc(i)
+							input(type='hidden',name='problem',value!="<?= $problem['order'] ?>")
+							//- - for(var i=1; i<=problem.choice_count; i++)
+							| <?php for($i=1;$i<$problem['choice_count']; $i++) { ?>
+							.field
+								.ui.radio.checkbox
+									input(type='radio',name='choice',value!="<?= $i ?>")
+									label <?= $abc($i) ?>
+							| <?php } ?>
 							button.ui.primary.button(type='submit',disabled) Submit
