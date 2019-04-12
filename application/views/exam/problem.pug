@@ -32,7 +32,7 @@ html(lang='en')
 						form.ui.form#answer-form(action='', method='POST')
 							input(type='hidden',name='problem',value!="<?= $problem['order'] ?>")
 							//- - for(var i=1; i<=problem.choice_count; i++)
-							| <?php for($i=1;$i<$problem['choice_count']; $i++) { ?>
+							| <?php for($i=1;$i<=$problem['choice_count']; $i++) { ?>
 							.field
 								.ui.radio.checkbox
 									input(type='radio',name='choice',value!="<?= $i ?>")
