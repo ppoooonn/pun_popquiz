@@ -1,4 +1,11 @@
 $(function(){
+	server.problem_end_time = (server.problem_end_time - server.offset) * 1000;
+	if(server.quiz_end_time)
+		server.quiz_end_time = (server.quiz_end_time - server.offset) * 1000;
+	else{
+		server.quiz_end_time = 0;
+		$('#quiz-end-timer').remove();
+	}
 	var load_finish = function(){
 		if(--loading > 0)
 			return true;
@@ -11,8 +18,10 @@ $(function(){
 	};
 	var start_timer = function(){
 		var end = Date.now()+1000*server.problem_timer;
-		if(server.end_time < end)
-			end = server.end_time;
+		if(server.problem_end_time < end)
+			end = server.problem_end_time;
+		if(server.quiz_end_time && server.quiz_end_time < end)
+			end = server.quiz_end_time;
 		var update = function(){
 			var t = Math.ceil((end - Date.now())/1000);
 			if(t<=0){
@@ -27,6 +36,19 @@ $(function(){
 			var s = t%60;
 			if(s<10)s='0'+s;
 			$('#timer').text(m+':'+s);
+
+			if(server.quiz_end_time){
+				var t = Math.ceil((server.quiz_end_time - Date.now())/1000);
+				if(t>=0){
+					var h = t/3600|0;
+					t-=3600*h;
+					var m = t/60|0;
+					var s = t%60;
+					if(m<10)s='0'+m;
+					if(s<10)s='0'+s;
+					$('#quiz-end-timer').text(h+':'+m+':'+s);
+				}
+			}
 		};
 		var inv = setInterval(update, 500);
 		update();

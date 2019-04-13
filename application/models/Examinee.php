@@ -19,7 +19,7 @@ class Examinee extends CI_Model {
 			return 'Invalid Token';
 		if(!$row->enable)
 			return 'Quiz not available yet';
-		if($row->duration!=0 && $row->start_time!=0 && $row->start_time+$row->duration<time())
+		if($row->duration!=0 && $row->start_time!=0 && $row->start_time+$row->duration*60<time())
 			return 'Quiz has been over';
 		$this->session->examinee_id = $row->examinee_id;
 		$this->session->quiz_id = $row->quiz_id;

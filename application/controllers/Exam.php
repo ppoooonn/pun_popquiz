@@ -41,6 +41,7 @@ class Exam extends CI_Controller {
 			'quiz_title' => $quiz->title,
 			'script_vars' => json_encode([
 				'start_time' => $quiz->start_time,
+				'end_time' => ($quiz->duration!=0 && $quiz->start_time!=0)?$quiz->start_time+$quiz->duration*60:0,
 				'server_time' => time(),
 			]),
 			'instruction' => $quiz->instruction,
@@ -57,8 +58,12 @@ class Exam extends CI_Controller {
 			$quiz = $this->quiz->get($this->session->quiz_id);
 			if($quiz->start_time > time())
 				redirect('/exam/lounge');
+			$end_time = ($quiz->duration!=0 && $quiz->start_time!=0)?$quiz->start_time+$quiz->duration*60:0;
+			if($end_time && $end_time < time())
+				redirect('/exam/lounge');
 			$this->session->quiz_title = $quiz->title;
 			$this->session->quiz_timer = $quiz->problem_time;
+			$this->session->quiz_end_time = $end_time;
 
 			// Generate random problem order
 			$problems = $this->problem->get_seen_problems($this->session->quiz_id, $examinee_id);
@@ -68,6 +73,8 @@ class Exam extends CI_Controller {
 			$this->session->problem_list = array_merge($problems['started'], $problems['unseen']);
 		}
 		if(empty($this->session->problem_list))
+			redirect('/exam/finish');
+		if($this->session->quiz_end_time && $this->session->quiz_end_time < time())
 			redirect('/exam/finish');
 		$problem_order = $this->session->problem_count - count($this->session->problem_list) + 1;
 		if((int)$order != $problem_order){
@@ -100,9 +107,10 @@ class Exam extends CI_Controller {
 					'image_large' => $problem_info['image_aux'],
 				],
 				'script_vars' => json_encode([
-					'end_time' => $time['loaded_time'] !== NULL?(
+					'problem_end_time' => $time['loaded_time'] !== NULL?(
 						$time['loaded_time'] + $this->session->quiz_timer):(
 						$time['start_time'] + 60 + $this->session->quiz_timer),
+					'quiz_end_time' => $this->session->quiz_end_time,
 					'server_time' => time(),
 					'problem_timer' => $this->session->quiz_timer,
 					'problem_order' => $problem_order,

@@ -5,7 +5,6 @@ html(lang='en')
 		script.
 			var server = <?= $script_vars ?>;
 			server.offset = server.server_time-Date.now()/1000;
-			server.end_time = (server.end_time - server.offset) * 1000;
 		include common.pug
 		script(src='/static/exam/problem.js')
 	body
@@ -16,6 +15,7 @@ html(lang='en')
 		| <?php } ?>
 		nav.ui.fixed.inverted.navbar.menu
 			.item <?= htmlspecialchars($quiz_title).' - '.$problem['order'] .'/'. $problem['count'] ?>
+			.item#quiz-end-timer
 			.right.menu
 				.item <?= htmlspecialchars($name) ?>
 				a.item(href='/exam/logout') Logout

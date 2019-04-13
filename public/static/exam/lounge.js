@@ -16,21 +16,21 @@ $(function(){
 			' '+date.toTimeString().substring(0,5);
 	};
 	var rtime = function (target, duration) {
-		// if(duration !== 0 && !duration)
-		// 	duration = +(target - new Date())/1000;
+		var prefix = duration>0?'ในอีก ':'ใน ';
+		duration = Math.abs(duration);
 		var seconds  = Math.ceil(duration);
 		if(seconds < 0)
 			return '';
 		if(seconds < 60)
-			return 'ในอีก ' + seconds +  ' วินาที';
+			return prefix + seconds +  ' วินาที';
 		var minutes = Math.round(duration/60);
 		var hours = Math.floor(minutes/60);
 		if(hours < 24)
-			return 'ในอีก ' + (hours>0?hours + ' ชั่วโมง ':'') + (minutes%60? minutes%60 + ' นาที' :'');
+			return prefix + (hours>0?hours + ' ชั่วโมง ':'') + (minutes%60? minutes%60 + ' นาที' :'');
 		hours = Math.round(minutes/60);
 		var days = Math.floor(hours/24);
 		if(days < 2)
-			return 'ในอีก ' + (days>0?days + ' วัน ':'') + (hours%24? hours%24 + ' ชั่วโมง' :'');
+			return prefix + (days>0?days + ' วัน ':'') + (hours%24? hours%24 + ' ชั่วโมง' :'');
 
 		return 'วันที่ '+formatDate(target);
 	};
@@ -44,14 +44,23 @@ $(function(){
 				msg = 'การสอบจะเริ่ม';
 			msg += rtime(new Date(server.start_time*1000), wait);
 			$('#timer').text(msg);
-			setTimeout(update,200);
+			setTimeout(update,300);
 		} else {
 			if(ready)
 				window.location.replace('/exam/problem');
 			else{
+				if(server.end_time){
+					var msg = 'การสอบจะจบลง';
+					wait = (Date.now()/1000+server.offset) - server.end_time;
+					msg += rtime(new Date(server.start_time*1000), wait);
+					$('#timer').text(msg);
+					setTimeout(update,300);
+				}else{
+					$('#timer').addClass('hide');
+				}
+
 				$('#start_btn').removeClass('hide');
 				$('#agree').addClass('hide');
-				$('#timer').addClass('hide');
 			}
 		}
 	};
