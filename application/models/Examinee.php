@@ -33,7 +33,7 @@ class Examinee extends CI_Model {
 		}
 		return $token;
 	}
-	public function create($quiz_id, $name, $token=NULL){
+	public function create($data, $token=NULL){
 		if($token===NULL){
 			for($retry = 0;$retry < self::TOKEN_RETRY_COUNT;$retry++){
 				$token = $this->_generate_token();
@@ -47,13 +47,36 @@ class Examinee extends CI_Model {
 			}
 			if($retry == self::TOKEN_RETRY_COUNT)
 				return 0;
+			$data['login'] = $token;
 		}
 		$this->db
-		->insert('examinee',[
+		->insert('examinee',$data);
+		$data['examinee_id'] = $this->db->insert_id();
+		return $data;
+	}
+	public function list($quiz_id){
+		$result = $this->db
+		->select([
+			'examinee_id',
+			'login',
+			'name',
+			'aux1',
+			'aux2',
+			'aux3'
+		])
+		->order_by('examinee_id', 'ASC')
+		->get_where('examinee',[
+			'quiz_id' => $quiz_id
+		])->result();
+		// handle exception
+		return $result;
+	}
+	public function delete($quiz_id, $examinee_id){
+		$this->db
+		->delete('examinee',[
 			'quiz_id' => $quiz_id,
-			'login' => $token,
-			'name' => $name
+			'examinee_id' => $examinee_id
 		]);
-		return $this->db->insert_id();
+		return true;
 	}
 }

@@ -122,5 +122,7 @@ html(lang='en')
 								a(:href="'quiz/' + quiz.quiz_id") {{quiz.start_time | timestampToDate}}
 							td.selectable
 								a(:href="'quiz/' + quiz.quiz_id") {{quiz.title}}
-						tr(v-if="quizzes.length == 0")
-							td.center.aligned(colspan=3) No quiz yet.
+						tr(v-if="filteredQuizzes.length == 0")
+							td.center.aligned(colspan=3)
+								template(v-if="quizzes.length == 0") No quiz yet.
+								template(v-else) No quiz matched.

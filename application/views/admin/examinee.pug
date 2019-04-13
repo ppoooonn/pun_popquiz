@@ -1,0 +1,213 @@
+doctype html
+html(lang='en')
+	head
+		title Examinee list
+		script.
+			var server = <?= $script_vars ?>;
+		include common.pug
+		script.
+			$(function(){
+				var lower = function(x) {if(x) return x.toLocaleLowerCase(); return '';}
+				for(var e in server.examinee){
+					server.examinee[e].sel = false;
+				}
+				window.app = new Vue({
+					el: 'main',
+					data : {
+						examinee: server.examinee,
+						searchbar: '',
+						selection: {},
+						form: {
+							name:'',
+							aux1:'',
+							aux2:'',
+							aux3:'',
+						}
+					},
+					methods: {
+						fetch: function(){
+							var self = this;
+							$.post({
+								url: '/admin/api_examinee_list',
+								data: {
+									quiz_id: server.quiz_id,
+								},
+								success: function(resp){
+									for(var e in resp.examinee){
+										resp.examinee[e].sel = false;
+									}
+									self.examinee = resp.examinee;
+								},
+								dataType: 'json'
+							});
+						},
+						create: function(event){
+							event.preventDefault();
+							var self = this;
+							$.post({
+								url: '/admin/api_examinee_create',
+								data: {
+									quiz_id: server.quiz_id,
+									name: this.form.name,
+									aux1: this.form.aux1,
+									aux2: this.form.aux2,
+									aux3: this.form.aux3,
+								},
+								success: function(resp){
+									resp.examinee.sel = false;
+									self.examinee.push(resp.examinee);
+									self.form.name = '';
+									self.form.aux1 = '';
+									$('#form-focus').focus();
+								},
+								dataType: 'json'
+							});
+						},
+						deleteSelected: function(){
+							var list = [];
+							for(var e in this.examinee){
+								if(this.examinee[e].sel)
+									list.push(this.examinee[e].examinee_id);
+							}
+							var self = this;
+							$('#delete-confirm').modal({
+								duration: 100,
+								onApprove: function(){
+									$.post({
+										url: '/admin/api_examinee_delete',
+										data: {
+											quiz_id: server.quiz_id,
+											examinee_id: JSON.stringify(list)
+										},
+										success: function(resp){
+											self.fetch();
+										},
+										dataType: 'json'
+									});
+								}
+							}).modal('show');
+						},
+						selectAll: function(){
+							var all = true;
+							for(var e in this.examinee){
+								if(!this.examinee[e].sel)
+									all = false;
+							}
+							all = !all;
+							for(var e in this.examinee){
+								this.examinee[e].sel = all;
+							}
+						},
+						select: function(e){
+							e.sel = !e.sel;
+						},
+						download: function(){
+						},
+						upload: function(){
+						}
+					},
+					computed: {
+						filteredExaminee: function(){
+							if(this.searchbar){
+								var needle = lower(this.searchbar);
+								var out = [];
+								for (let i of this.examinee){
+									if(lower(i.name).indexOf(needle)!==-1)
+										out.push(i);
+									else if(lower(i.login).indexOf(needle)!==-1)
+										out.push(i);
+									else if(lower(i.aux1).indexOf(needle)!==-1)
+										out.push(i);
+									else if(lower(i.aux2).indexOf(needle)!==-1)
+										out.push(i);
+									else if(lower(i.aux3).indexOf(needle)!==-1)
+										out.push(i);
+								}
+								return out;
+							} else
+								return this.examinee;
+						}
+					}
+				});
+			});
+	body
+		#delete-confirm.ui.mini.modal
+			.header
+				i.trash.alternate.icon
+				| Delete Confirmation
+			.content
+				| ถ้าหากลบแล้วจะไม่สามารถ เรียกคืนข้อมูลได้
+			.actions
+				.ui.red.cancel.button Cancel
+				.ui.green.ok.button Delete
+		nav.ui.fixed.navbar.menu
+			.item
+				.ui.breadcrumb
+					a.section(href='/admin/quiz_list') Quiz List
+					i.right.arrow.icon.divider
+					a.section(href!="<?= '/admin/quiz/'.($quiz->quiz_id) ?>") <?= htmlspecialchars($quiz->title) ?>
+					i.right.arrow.icon.divider
+					.active.section Examinee
+			.right.menu
+				a.item(href='/admin/logout') Logout
+		main.ui.grid.container(v-cloak)
+			.column
+				h1.ui.dividing.header Examinee List
+				.ui.items
+					.item
+						.content
+							.ui.icon.input
+								input(type="text",placeholder="Search...",v-model="searchbar")
+								i.search.icon(v-show="!searchbar")
+								i.close.link.icon(v-show="searchbar", @click="searchbar=''")
+							.right.floated
+								a.ui.labeled.icon.primary.button(href!="/admin/examinee_download/<?= $quiz->quiz_id ?>")
+									i.download.icon
+									| Download
+								button.ui.labeled.icon.primary.button(@click="upload")
+									i.upload.icon
+									| Upload
+				form.ui.form(@submit="create($event)",action="")
+					.five.fields
+						.two.wide.field
+							label ID
+							input#form-focus(name="aux1",v-model="form.aux1")
+						.eight.wide.field
+							label Name
+							input(name="name",v-model="form.name")
+						.four.wide.field
+							label สถาบัน
+							input(name="aux2",v-model="form.aux2")
+						.two.wide.field
+							label ชั้นปี
+							input(name="aux3",v-model="form.aux3")
+						.two.wide.field
+							label &nbsp;
+							button.fluid.ui.icon.button(type="submit")
+								i.plus.icon
+				table.ui.selectable.celled.table
+					thead
+						tr
+							th(@click="selectAll")
+								button.ui.icon.button
+									i.checkmark.icon
+							th.two.wide ID
+							th.five.wide Name
+							th.two.wide Token
+							th.three.wide สถาบัน
+							th.three.wide ชั้นปี
+					tbody
+						tr(v-for="e in filteredExaminee")
+							td.selectable.center.aligned(@click="select(e)")
+								i.large.checkmark.icon(v-show="e.sel")
+							td {{e.aux1}}
+							td {{e.name}}
+							td {{e.login}}
+							td {{e.aux2}}
+							td {{e.aux3}}
+						tr(v-if="filteredExaminee.length == 0")
+							td.center.aligned(colspan=5) Empty
+				div
+					button.ui.labeled.red.icon.button(@click="deleteSelected")
+						i.trash.icon
+						| Delete Selected

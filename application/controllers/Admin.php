@@ -136,7 +136,25 @@ class Admin extends CI_Controller {
 		$this->load->model('problem');
 		$this->output->set_content_type('text/csv')
 					->set_header('Content-Disposition: attachment; filename="score.csv"')
-					->set_output($this->problem->get_scores((int)$quiz_id));
+					->set_output("\xEF\xBB\xBF".$this->problem->get_scores((int)$quiz_id));
+	}
+	public function examinee_download($quiz_id) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('examinee');
+		$examinee = $this->examinee->list((int)$quiz_id);
+		$output = "ID,Name,Login,สถาบัน,ชั้นปี\n";
+		foreach ($examinee as $row){
+			$output .= '"'.
+				$row->aux1 .'","'.
+				$row->name .'","'.
+				$row->login .'","'.
+				$row->aux2 .'","'.
+				$row->aux3 ."\"\n";
+		}
+		$this->output->set_content_type('text/csv')
+					->set_header('Content-Disposition: attachment; filename="examinee.csv"')
+					->set_output("\xEF\xBB\xBF".$output);
 	}
 
 
@@ -289,6 +307,53 @@ class Admin extends CI_Controller {
 		if($filename == '' or strpos($filename, '/') !== false)
 			show_error('Bad filename.', 400);
 		@unlink($this->config->item('data_path').'temp/'.$filename);
+	}
+	public function api_examinee_list() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('examinee');
+		$examinee = $this->examinee->list((int)$this->input->post('quiz_id'));
+
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode([
+			'server_time' => time(),
+			'examinee' => $examinee
+		]));
+	}
+	public function api_examinee_create() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('examinee');
+		$success = $this->examinee->create([
+			'quiz_id' => (int)$this->input->post('quiz_id'),
+			'name' => $this->input->post('name')?:'',
+			'aux1' => $this->input->post('aux1')?:'',
+			'aux2' => $this->input->post('aux2')?:'',
+			'aux3' => $this->input->post('aux3')?:'',
+		]);
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode([
+			'server_time' => time(),
+			'examinee' => $success
+		]));
+	}
+	public function api_examinee_delete() {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('examinee');
+
+		$examinee_ids = json_decode($this->input->post('examinee_id'));
+		foreach($examinee_ids as $id){
+			$this->examinee->delete((int)$this->input->post('quiz_id'), (int)$id);
+		}
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode([
+			'server_time' => time(),
+			'success' => true
+		]));
 	}
 	public function api_quiz_list() {
 		if($this->session->admin_login === NULL)

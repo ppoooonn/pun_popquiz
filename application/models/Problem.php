@@ -192,17 +192,19 @@ class Problem extends CI_Model {
 
 	public function get_scores($quiz_id){
 		$result = $this->db
-		->select(['examinee.examinee_id as id', 'examinee.name as name', 'count(answers.answer) as answered', 'sum(answers.answer = problems.correct_choice) as correct'])
+		->select(['examinee.aux1 as id', 'examinee.aux2', 'examinee.aux3', 'examinee.name as name', 'count(answers.answer) as answered', 'sum(answers.answer = problems.correct_choice) as correct'])
 		->join('answers','examinee.examinee_id = answers.examinee_id')
 		->join('problems','problems.problem_id = answers.problem_id')
 		->where('examinee.quiz_id' , $quiz_id)
 		->group_by('examinee.examinee_id')
 		->get('examinee')->result();
-		$output = "DBID,Name,Answered,Correct\n";
+		$output = "ID,Name,สถาบัน,ชั้นปี,Answered,Correct\n";
 		foreach ($result as $row){
-			$output .= 
-				$row->id .',"'.
-				$row->name .'",'.
+			$output .= '"'.
+				$row->id .'","'.
+				$row->name .'","'.
+				$row->aux2 .'","'.
+				$row->aux3 .'",'.
 				$row->answered .','.
 				$row->correct ."\n";
 		}
