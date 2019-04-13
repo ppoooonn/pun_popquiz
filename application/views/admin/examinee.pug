@@ -46,6 +46,8 @@ html(lang='en')
 						},
 						create: function(event){
 							event.preventDefault();
+							if(this.form.aux1 == '' || this.form.name == '')
+								return;
 							var self = this;
 							$.post({
 								url: '/admin/api_examinee_create',

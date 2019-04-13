@@ -106,24 +106,6 @@ html(lang='en')
 								});
 							},0);
 						},
-						//- deleteProblems: function(problem, index){
-						//- 	var self = this;
-						//- 	$('#delete-confirm').modal({
-						//- 		duration: 100,
-						//- 		onApprove: function(){
-						//- 			$.post({
-						//- 				url: '/admin/api_problem_delete',
-						//- 				data: {
-						//- 					problem_id: problem.problem_id
-						//- 				},
-						//- 				success: function(resp){
-						//- 					self.problems.splice(index, 1);
-						//- 				},
-						//- 				dataType: 'json'
-						//- 			});
-						//- 		}
-						//- 	}).modal('show');
-						//- },
 						deleteProblems: function(){
 							var list = [];
 							for(let e of this.problems){

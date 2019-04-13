@@ -70,11 +70,11 @@ class Examinee extends CI_Model {
 		$row = $this->db
 		->select(['examinee_id'])
 		->get_where('examinee', [
-			'name'=> $data['name']
+			'aux1'=> $data['aux1']
 		], 1)->row();
 		if($row){
 			$newdata = $data;
-			unset($newdata['name']);
+			unset($newdata['aux1']);
 			$this->update($row->examinee_id, $newdata);
 			$data['examinee_id'] = $row->examinee_id;
 			return $data;
