@@ -47,6 +47,9 @@ img.zoom {
 .ui.fullscreen.modal, .ui.scrolling.fullscreen.modal {
 	left: 2.5% !important;
 }
+#timer.red {
+	color: red;
+}
 
 /* lounge */
 .instruction {

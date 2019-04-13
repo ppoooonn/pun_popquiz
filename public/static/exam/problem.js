@@ -32,6 +32,9 @@ $(function(){
 				},100);
 				return;
 			}
+			if(t<=5){
+				$('#timer').addClass('red');
+			}
 			var m = t/60|0;
 			var s = t%60;
 			if(s<10)s='0'+s;
