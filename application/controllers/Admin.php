@@ -349,14 +349,19 @@ class Admin extends CI_Controller {
 			show_error('Not logged in.', 403);
 
 		$this->load->model('problem');
-		$row = $this->problem->get_admin((int)$this->input->post('problem_id'),true);
-		if(!$row)
-			show_error('Bad param',400);
-		if($row->image_main)
-			@unlink($this->config->item('data_path').$row->image_main);
-		if($row->image_aux)
-			@unlink($this->config->item('data_path').$row->image_aux);
-		$resp = $this->problem->delete((int)$this->input->post('problem_id'));
+		$problem_ids = json_decode($this->input->post('problem_id'));
+		foreach($problem_ids as $id){
+			$row = $this->problem->get_admin((int)$id,true);
+			if(!$row)
+				show_error('Bad param',400);
+			if($row->image_main)
+				@unlink($this->config->item('data_path').$row->image_main);
+			if($row->image_aux)
+				@unlink($this->config->item('data_path').$row->image_aux);
+			$resp = $this->problem->delete((int)$id);
+			if(!$resp)
+				break;
+		}
 
 		$this->output
 		->set_content_type('application/json')

@@ -62,10 +62,15 @@ html(lang='en')
 						$(this.$el).off().remove();
 					}
 				})
-				window.app = new Vue({
+				if(!server.problems)
+					server.problems = [];
+				for(let e of server.problems){
+					e.sel = false;
+				}
+				var app = new Vue({
 					el: 'main',
 					data : {
-						problems: server.problems?server.problems:[],
+						problems: server.problems,
 						new_choices: 4
 					},
 					methods: {
@@ -101,7 +106,30 @@ html(lang='en')
 								});
 							},0);
 						},
-						deleteProblem: function(problem, index){
+						//- deleteProblems: function(problem, index){
+						//- 	var self = this;
+						//- 	$('#delete-confirm').modal({
+						//- 		duration: 100,
+						//- 		onApprove: function(){
+						//- 			$.post({
+						//- 				url: '/admin/api_problem_delete',
+						//- 				data: {
+						//- 					problem_id: problem.problem_id
+						//- 				},
+						//- 				success: function(resp){
+						//- 					self.problems.splice(index, 1);
+						//- 				},
+						//- 				dataType: 'json'
+						//- 			});
+						//- 		}
+						//- 	}).modal('show');
+						//- },
+						deleteProblems: function(){
+							var list = [];
+							for(let e of this.problems){
+								if(e.sel)
+									list.push(e.problem_id);
+							}
 							var self = this;
 							$('#delete-confirm').modal({
 								duration: 100,
@@ -109,16 +137,36 @@ html(lang='en')
 									$.post({
 										url: '/admin/api_problem_delete',
 										data: {
-											problem_id: problem.problem_id
+											quiz_id: server.quiz_id,
+											problem_id: JSON.stringify(list)
 										},
 										success: function(resp){
-											self.problems.splice(index, 1);
+											var newlist = [];
+											for(let e of self.problems){
+												if(!e.sel)
+													newlist.push(e);
+											}
+											self.problems = newlist;
 										},
 										dataType: 'json'
 									});
 								}
 							}).modal('show');
-						}
+						},
+						selectAll: function(){
+							var all = true;
+							for(let e of this.problems){
+								if(!e.sel)
+									all = false;
+							}
+							all = !all;
+							for(let e of this.problems){
+								e.sel = all;
+							}
+						},
+						select: function(e){
+							e.sel = !e.sel;
+						},
 					},
 					computed: {
 					}
@@ -164,6 +212,7 @@ html(lang='en')
 								success: function(resp){
 									if('problem' in resp){
 										if(isnew){
+											resp.problem.sel = false;
 											app.problems.push(resp.problem);
 										}else{
 											var p = 0;
@@ -285,21 +334,21 @@ html(lang='en')
 				table.ui.selectable.celled.table.problem-list
 					thead
 						tr
-							//- TODO ลบ + ลำดับ
+							//- TODO ลำดับ
 							//- TODO ลบ image_aux
-							th.one.wide ลบ
+							th.one.wide(@click="selectAll")
+								button.ui.icon.button
+									i.checkmark.icon
 							th.six.wide รูปคำถาม
 							th.six.wide รูปเพิ่มเติม
 							th.one.wide จำนวนตัวเลือก
 							th.one.wide คำตอบ
 					tbody
 						tr(v-for="(problem, index) in problems")
-							td
+							td.selectable.center.aligned(@click="select(problem)")
+								i.large.checkmark.icon(v-show="problem.sel")
 								// .ui.icon.button
 								// 	i.chevron.up.icon
-								p
-									.ui.icon.button(@click="deleteProblem(problem, index)")
-										i.trash.icon
 							// 	p
 							// 		.ui.icon.button
 							// 			i.chevron.down.icon
@@ -324,3 +373,7 @@ html(lang='en')
 							td
 								dropdown(:range=12,:value=4)
 							td
+				div
+					button.ui.labeled.red.icon.button(@click="deleteProblems")
+						i.trash.icon
+						| Delete Selected

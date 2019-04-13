@@ -9,10 +9,10 @@ html(lang='en')
 		script.
 			$(function(){
 				var lower = function(x) {if(x) return x.toLocaleLowerCase(); return '';}
-				for(var e in server.examinee){
-					server.examinee[e].sel = false;
+				for(let e of server.examinee){
+					e.sel = false;
 				}
-				window.app = new Vue({
+				var app = new Vue({
 					el: 'main',
 					data : {
 						examinee: server.examinee,
@@ -36,8 +36,8 @@ html(lang='en')
 									quiz_id: server.quiz_id,
 								},
 								success: function(resp){
-									for(var e in resp.examinee){
-										resp.examinee[e].sel = false;
+									for(let e of resp.examinee){
+										e.sel = false;
 									}
 									self.examinee = resp.examinee;
 								},
@@ -68,9 +68,9 @@ html(lang='en')
 						},
 						deleteSelected: function(){
 							var list = [];
-							for(var e in this.examinee){
-								if(this.examinee[e].sel)
-									list.push(this.examinee[e].examinee_id);
+							for(let e of this.examinee){
+								if(e.sel)
+									list.push(e.examinee_id);
 							}
 							var self = this;
 							$('#delete-confirm').modal({
@@ -92,13 +92,13 @@ html(lang='en')
 						},
 						selectAll: function(){
 							var all = true;
-							for(var e in this.examinee){
-								if(!this.examinee[e].sel)
+							for(let e of this.examinee){
+								if(!e.sel)
 									all = false;
 							}
 							all = !all;
-							for(var e in this.examinee){
-								this.examinee[e].sel = all;
+							for(let e of this.examinee){
+								e.sel = all;
 							}
 						},
 						select: function(e){
@@ -220,7 +220,7 @@ html(lang='en')
 				table.ui.selectable.celled.table
 					thead
 						tr
-							th(@click="selectAll")
+							th.one.wide(@click="selectAll")
 								button.ui.icon.button
 									i.checkmark.icon
 							th.two.wide ID
@@ -238,7 +238,7 @@ html(lang='en')
 							td {{e.aux2}}
 							td {{e.aux3}}
 						tr(v-if="filteredExaminee.length == 0")
-							td.center.aligned(colspan=5) Empty
+							td.center.aligned(colspan=6) Empty
 				div
 					button.ui.labeled.red.icon.button(@click="deleteSelected")
 						i.trash.icon
