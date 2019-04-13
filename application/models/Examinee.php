@@ -54,6 +54,33 @@ class Examinee extends CI_Model {
 		$data['examinee_id'] = $this->db->insert_id();
 		return $data;
 	}
+	public function update($examinee_id ,$data){
+		$resp = $this->db
+		->where('examinee_id', $examinee_id)
+		->update('examinee', $data);
+	}
+	public function update_or_create($data){
+		// TODO: change to ON DUPLICATE KEY UPDATE
+		if(isset($data['examinee_id'])){
+			$newdata = $data;
+			unset($newdata['examinee_id']);
+			$this->update($data['examinee_id'], $data);
+			return $data;
+		}
+		$row = $this->db
+		->select(['examinee_id'])
+		->get_where('examinee', [
+			'name'=> $data['name']
+		], 1)->row();
+		if($row){
+			$newdata = $data;
+			unset($newdata['name']);
+			$this->update($row->examinee_id, $newdata);
+			$data['examinee_id'] = $row->examinee_id;
+			return $data;
+		}
+		return $this->create($data);
+	}
 	public function list($quiz_id){
 		$result = $this->db
 		->select([

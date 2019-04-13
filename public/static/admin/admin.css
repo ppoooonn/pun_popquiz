@@ -76,3 +76,11 @@ img.zoom {
 .ui.progress {
 	margin: 1em 0 0;
 }
+
+/* Examinee */
+.upload-form img {
+	margin: 1rem auto;
+}
+.upload-form {
+	text-align: center;
+}

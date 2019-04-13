@@ -5,6 +5,7 @@ html(lang='en')
 		script.
 			var server = <?= $script_vars ?>;
 		include common.pug
+		script(src='/static/admin/jquery.fileupload.js')
 		script.
 			$(function(){
 				var lower = function(x) {if(x) return x.toLocaleLowerCase(); return '';}
@@ -22,7 +23,9 @@ html(lang='en')
 							aux1:'',
 							aux2:'',
 							aux3:'',
-						}
+						},
+						show_upload: false,
+						upload_error: '',
 					},
 					methods: {
 						fetch: function(){
@@ -123,11 +126,33 @@ html(lang='en')
 									else if(lower(i.aux3).indexOf(needle)!==-1)
 										out.push(i);
 								}
+								var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+								out.sort(function(a,b){
+									return collator.compare(a.aux1,b.aux1);
+								});
 								return out;
 							} else
 								return this.examinee;
 						}
 					}
+				});
+				var fileupload_data = {};
+				$('#fileupload').fileupload({
+					url: '/admin/examinee_upload',
+					dataType: 'json',
+					sequentialUploads: true,
+					formData: function(){return [
+						{name:'quiz_id', value: server.quiz_id}
+					];},
+					done: function(e,data){
+						data = data.response().result;
+						if(data.success){
+							app.show_upload = false;
+							app.fetch();
+						}else{
+							app.upload_error = data.error;
+						}
+					},
 				});
 			});
 	body
@@ -164,9 +189,16 @@ html(lang='en')
 								a.ui.labeled.icon.primary.button(href!="/admin/examinee_download/<?= $quiz->quiz_id ?>")
 									i.download.icon
 									| Download
-								button.ui.labeled.icon.primary.button(@click="upload")
+								button.ui.labeled.icon.primary.button(@click="show_upload=!show_upload;upload_error='';")
 									i.upload.icon
 									| Upload
+				.ui.segment.upload-form(v-show="show_upload")
+					img.ui.medium.image(src="/static/admin/img/instruction.png")
+					.ui.error.message(v-if="upload_error") {{upload_error}}
+					#upload-btn.ui.primary.labeled.icon.button
+						input#fileupload(type="file",name="file")
+						i.upload.icon
+						| Upload
 				form.ui.form(@submit="create($event)",action="")
 					.five.fields
 						.two.wide.field

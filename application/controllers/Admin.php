@@ -157,6 +157,74 @@ class Admin extends CI_Controller {
 					->set_output("\xEF\xBB\xBF".$output);
 	}
 
+	public function examinee_upload() {
+		function show_json_error($self, $message){
+			$self->output
+			->set_content_type('application/json')
+			->set_output(json_encode([
+				'server_time' => time(),
+				'error' => $message
+			]));
+		}
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		if(!@$_FILES['file']){
+			show_json_error($this, 'No file.');
+			return;
+		}
+		$quiz_id = (int) $this->input->post('quiz_id');
+		if(!$quiz_id){
+			show_json_error($this, 'No quiz id.');
+			return;
+		}
+
+		$fp = fopen($_FILES['file']['tmp_name'], 'r');
+		$out = [];
+		$firstline = true;
+		while (($row = fgetcsv($fp, 4096, ",")) !== FALSE) {
+			$num = count($row);
+			if($num === 0)
+				continue;
+			if($num !== 4){
+				show_json_error($this, 'Only 4 column.');
+				return;
+			}
+			for ($c=0; $c < $num; $c++) {
+				$row[$c]=trim($row[$c]);
+			}
+			if($firstline){
+				if(substr($row[0],0,3) !== "\xEF\xBB\xBF"){
+					show_json_error($this, 'Not UTF-8.');
+					return;
+				}
+				$row[0] = substr($row[0],3);
+				$firstline=false;
+				if(strpbrk($row[0], '1234567890') === FALSE) // has no number probably header
+					continue;
+			}
+			if($row[1] == "")
+				continue;
+			$out[] = $row;
+		}
+		fclose($fp);
+		$this->load->model('examinee');
+		foreach($out as $row){
+			$this->examinee->update_or_create([
+				'quiz_id' => $quiz_id,
+				'name' => $row[1],
+				'aux1' => $row[0],
+				'aux2' => $row[2],
+				'aux3' => $row[3],
+			]);
+		}
+		$this->output
+		->set_content_type('application/json')
+		->set_output(json_encode([
+			'server_time' => time(),
+			'success' => true
+		]));
+	}
+
 
 	public function upload() {
 		// TODO: multi-user
