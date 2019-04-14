@@ -91,7 +91,8 @@ class Examinee extends CI_Model {
 			'aux2',
 			'aux3'
 		])
-		->order_by('examinee_id', 'ASC')
+		->order_by('LENGTH(aux1)', 'ASC')
+		->order_by('aux1', 'ASC')
 		->get_where('examinee',[
 			'quiz_id' => $quiz_id
 		])->result();

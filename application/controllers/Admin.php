@@ -138,6 +138,14 @@ class Admin extends CI_Controller {
 					->set_header('Content-Disposition: attachment; filename="score.csv"')
 					->set_output("\xEF\xBB\xBF".$this->problem->get_scores((int)$quiz_id));
 	}
+	public function answers($quiz_id) {
+		if($this->session->admin_login === NULL)
+			show_error('Not logged in.', 403);
+		$this->load->model('problem');
+		$this->output->set_content_type('text/csv')
+					->set_header('Content-Disposition: attachment; filename="answers.csv"')
+					->set_output("\xEF\xBB\xBF".$this->problem->get_answers((int)$quiz_id));
+	}
 	public function examinee_download($quiz_id) {
 		if($this->session->admin_login === NULL)
 			show_error('Not logged in.', 403);

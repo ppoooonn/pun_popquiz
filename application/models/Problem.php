@@ -211,6 +211,103 @@ class Problem extends CI_Model {
 		return $output;
 	}
 
+	public function get_answers($quiz_id){
+		function num2alpha($n){
+			for($r = ""; $n >= 0; $n = intval($n / 26) - 1)
+				$r = chr($n%26 + 0x41) . $r;
+			return $r;
+		}
+		function abc($x){ return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[$x-1];}
+		$problems = $this->db
+		->select([
+			'problem_id','correct_choice'
+		])
+		->order_by('order', 'ASC')
+		->order_by('problem_id', 'ASC')
+		->get_where('problems',[
+			'quiz_id' => $quiz_id
+		])->result();
+
+		$examinee = $this->db
+		->select([
+			'examinee_id',
+			'name',
+			'aux1',
+			'aux2',
+			'aux3'
+		])
+		->order_by('LENGTH(aux1)', 'ASC')
+		->order_by('aux1', 'ASC')
+		->get_where('examinee',[
+			'quiz_id' => $quiz_id
+		])->result();
+
+		$answers = $this->db
+		->select(['answers.examinee_id','answers.problem_id','answers.answer'])
+		->join('answers','problems.problem_id = answers.problem_id')
+		->get_where('problems',[
+			'problems.quiz_id' => $quiz_id,
+		])->result();
+
+		$prob_map = [];
+
+		$output = 'ID,ชื่อ,สถาบัน,ชั้นปี';
+		for ($i = 1; $i <= count($problems); $i++){
+			$output .= ',ข้อ'.$i.'';
+			$prob_map[$problems[$i-1]->problem_id] = $i-1;
+		}
+		$output .= ",คะแนน\n";
+		$dict = [];
+		foreach ($answers as $row){
+			if($row->answer)
+				$dict[$row->examinee_id][$prob_map[$row->problem_id]] = $row->answer;
+		}
+
+		$answerrow = '$'.(2+count($examinee));
+		$colstart = '$'.num2alpha(4);
+		$colend = '$'.num2alpha(count($problems)-1+ 4);
+		$rownum = 2;
+		foreach ($examinee as $row){
+			$output .= '"'.
+				$row->aux1 .'","'.
+				$row->name .'","'.
+				$row->aux2 .'","'.
+				$row->aux3 .'"';
+			for ($i = 0; $i < count($problems); $i++){
+				if(isset($dict[$row->examinee_id]) && isset($dict[$row->examinee_id][$i]))
+					$output .= ','.abc($dict[$row->examinee_id][$i]);
+				else
+					$output .= ',';
+			}
+			$output .= ',"=SUMPRODUCT(--('.
+					$colstart.$rownum.':'.$colend.$rownum.
+					'='.
+					$colstart.$answerrow.':'.$colend.$answerrow.
+					'))"';
+			$output .= "\n";
+			$rownum++;
+		}
+		$output .= ',,,เฉลย';
+		for ($i = 0; $i < count($problems); $i++){
+			$output .= ','.abc($problems[$i]->correct_choice);
+		}
+		$output .= "\n";
+
+		$output .= ',,,ตอบถูก';
+		$rowstart = '$'.(2);
+		$rowend = '$'.(count($examinee)-1+2);
+		for ($i = 0; $i < count($problems); $i++){
+			$col = num2alpha($i+4);
+			$output .= ',"=COUNTIF('.
+						$col.$rowstart.':'.$col.$rowend.
+						','.
+						$col.$answerrow.')"';
+		}
+		$output .= "\n";
+
+		return $output;
+	}
+
 	public function time(){
 		return $this->input->server('REQUEST_TIME');
 	}

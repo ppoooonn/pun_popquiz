@@ -113,9 +113,10 @@ html(lang='en')
 					},
 					computed: {
 						filteredExaminee: function(){
+							var out;
 							if(this.searchbar){
 								var needle = lower(this.searchbar);
-								var out = [];
+								out = [];
 								for (let i of this.examinee){
 									if(lower(i.name).indexOf(needle)!==-1)
 										out.push(i);
@@ -128,13 +129,13 @@ html(lang='en')
 									else if(lower(i.aux3).indexOf(needle)!==-1)
 										out.push(i);
 								}
-								var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-								out.sort(function(a,b){
-									return collator.compare(a.aux1,b.aux1);
-								});
-								return out;
 							} else
-								return this.examinee;
+								out = this.examinee;
+							var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+							out.sort(function(a,b){
+								return collator.compare(a.aux1,b.aux1);
+							});
+							return out;
 						}
 					}
 				});
@@ -226,10 +227,10 @@ html(lang='en')
 								button.ui.icon.button
 									i.checkmark.icon
 							th.two.wide ID
-							th.five.wide Name
-							th.two.wide Token
+							th.six.wide Name
+							th.three.wide Token
 							th.three.wide สถาบัน
-							th.three.wide ชั้นปี
+							th.one.wide ชั้นปี
 					tbody
 						tr(v-for="e in filteredExaminee")
 							td.selectable.center.aligned(@click="select(e)")
