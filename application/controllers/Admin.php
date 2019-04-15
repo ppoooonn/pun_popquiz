@@ -151,18 +151,22 @@ class Admin extends CI_Controller {
 			show_error('Not logged in.', 403);
 		$this->load->model('examinee');
 		$examinee = $this->examinee->list((int)$quiz_id);
-		$output = "ID,Name,Login,สถาบัน,ชั้นปี\n";
+
+		$fp = fopen("php://temp", 'w+');
+		fputcsv($fp, ["ID","Name","Login","สถาบัน","ชั้นปี"]);
 		foreach ($examinee as $row){
-			$output .= '"'.
-				$row->aux1 .'","'.
-				$row->name .'","'.
-				$row->login .'","'.
-				$row->aux2 .'","'.
-				$row->aux3 ."\"\n";
+			fputcsv($fp, [
+				'="'.$row->aux1.'"',
+				$row->name,
+				$row->login,
+				$row->aux2,
+				$row->aux3
+			]);
 		}
+		rewind($fp);
 		$this->output->set_content_type('text/csv')
 					->set_header('Content-Disposition: attachment; filename="examinee.csv"')
-					->set_output("\xEF\xBB\xBF".$output);
+					->set_output("\xEF\xBB\xBF".stream_get_contents($fp));
 	}
 
 	public function examinee_upload() {

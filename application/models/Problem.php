@@ -210,17 +210,21 @@ class Problem extends CI_Model {
 		->where('examinee.quiz_id' , $quiz_id)
 		->group_by('examinee.examinee_id')
 		->get('examinee')->result();
-		$output = "ID,Name,สถาบัน,ชั้นปี,Answered,Correct\n";
+
+		$fp = fopen("php://temp", 'w+');
+		fputcsv($fp, ["ID","Name","สถาบัน","ชั้นปี","Answered","Correct"]);
 		foreach ($result as $row){
-			$output .= '"'.
-				$row->id .'","'.
-				$row->name .'","'.
-				$row->aux2 .'","'.
-				$row->aux3 .'",'.
-				$row->answered .','.
-				$row->correct ."\n";
+			fputcsv($fp, [
+				'="'.$row->id.'"',
+				$row->name,
+				$row->aux2,
+				$row->aux3,
+				$row->answered,
+				$row->correct
+			]);
 		}
-		return $output;
+		rewind($fp);
+		return stream_get_contents($fp);
 	}
 
 	public function get_answers($quiz_id){
@@ -263,12 +267,16 @@ class Problem extends CI_Model {
 
 		$prob_map = [];
 
-		$output = 'ID,ชื่อ,สถาบัน,ชั้นปี';
+		$fp = fopen("php://temp", 'w+');
+
+		$csvrow = ['ID','ชื่อ','สถาบัน','ชั้นปี'];
 		for ($i = 1; $i <= count($problems); $i++){
-			$output .= ',ข้อ'.$i.'';
+			$csvrow[] = 'ข้อที่'.$i;
 			$prob_map[$problems[$i-1]->problem_id] = $i-1;
 		}
-		$output .= ",คะแนน\n";
+		$csvrow[] = "คะแนน";
+		fputcsv($fp, $csvrow);
+
 		$dict = [];
 		foreach ($answers as $row){
 			if($row->answer)
@@ -280,44 +288,47 @@ class Problem extends CI_Model {
 		$colend = '$'.num2alpha(count($problems)-1+ 4);
 		$rownum = 2;
 		foreach ($examinee as $row){
-			$output .= '"'.
-				$row->aux1 .'","'.
-				$row->name .'","'.
-				$row->aux2 .'","'.
-				$row->aux3 .'"';
+			$csvrow = [
+				'="'.$row->aux1.'"',
+				$row->name,
+				$row->aux2,
+				$row->aux3
+			];
 			for ($i = 0; $i < count($problems); $i++){
 				if(isset($dict[$row->examinee_id]) && isset($dict[$row->examinee_id][$i]))
-					$output .= ','.abc($dict[$row->examinee_id][$i]);
+					$csvrow[] = abc($dict[$row->examinee_id][$i]);
 				else
-					$output .= ',';
+					$csvrow[] = '';
 			}
-			$output .= ',"=SUMPRODUCT(--('.
+			$csvrow[] = '=SUMPRODUCT(--('.
 					$colstart.$rownum.':'.$colend.$rownum.
 					'='.
 					$colstart.$answerrow.':'.$colend.$answerrow.
-					'))"';
-			$output .= "\n";
+					'))';
+			fputcsv($fp, $csvrow);
 			$rownum++;
 		}
-		$output .= ',,,เฉลย';
-		for ($i = 0; $i < count($problems); $i++){
-			$output .= ','.abc($problems[$i]->correct_choice);
-		}
-		$output .= "\n";
 
-		$output .= ',,,ตอบถูก';
+		$csvrow = ['','','','เฉลย'];
+		for ($i = 0; $i < count($problems); $i++){
+			$csvrow[] = abc($problems[$i]->correct_choice);
+		}
+		fputcsv($fp, $csvrow);
+
+		$csvrow = ['','','','ตอบถูก'];
 		$rowstart = '$'.(2);
 		$rowend = '$'.(count($examinee)-1+2);
 		for ($i = 0; $i < count($problems); $i++){
 			$col = num2alpha($i+4);
-			$output .= ',"=COUNTIF('.
+			$csvrow[] = '=COUNTIF('.
 						$col.$rowstart.':'.$col.$rowend.
 						','.
-						$col.$answerrow.')"';
+						$col.$answerrow.')';
 		}
-		$output .= "\n";
+		fputcsv($fp, $csvrow);
 
-		return $output;
+		rewind($fp);
+		return stream_get_contents($fp);
 	}
 
 	public function time(){
