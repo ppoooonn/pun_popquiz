@@ -298,6 +298,7 @@ class Admin extends CI_Controller {
 		$image_aux = $this->input->post('image_aux')?:'';
 		$choices = (int)$this->input->post('choices');
 		$correct_choice = (int)$this->input->post('correct_choice');
+		$order = (int)$this->input->post('order');
 
 		$this->load->model('problem');
 		$froot = $this->config->item('data_path');
@@ -305,6 +306,8 @@ class Admin extends CI_Controller {
 		$payload = [];
 		if($choices)
 			$payload['choices'] = $choices;
+		if($order)
+			$payload['order'] = $order;
 		if($correct_choice){ // TODO: check > choice
 			$payload['correct_choice'] = $correct_choice;
 		}

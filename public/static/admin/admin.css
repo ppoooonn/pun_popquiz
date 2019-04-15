@@ -31,6 +31,13 @@
 .problem-list tbody tr{
 	height: 10rem;
 }
+.problem-list .order button{
+	display: block;
+	margin: 0.2rem 0;
+}
+.problem-list .order .order-number{
+	font-weight: bold;
+}
 #imgmodal .content {
 	text-align: center;
 }

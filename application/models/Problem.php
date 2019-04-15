@@ -171,7 +171,19 @@ class Problem extends CI_Model {
 		return $row;
 	}
 	public function create($quiz_id, $payload){
+		// TODO: use sql
+		$count = $this->db
+		->select('count(problem_id) as count')
+		->get_where('problems',[
+			'quiz_id' => $quiz_id
+		])->row();
+		if(!$count)
+			$count = 0;
+		else
+			$count = $count->count;
+		$count++;
 		$payload['quiz_id'] = $quiz_id;
+		$payload['order'] = $count;
 		$this->db
 		->insert('problems',$payload);
 		return $this->db->insert_id();

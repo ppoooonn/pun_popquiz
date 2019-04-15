@@ -90,6 +90,45 @@ html(lang='en')
 								.modal('show')
 								.modal('unbind scrollLock');
 						},
+						move: function(index, to){
+							to += index;
+							if(index > to){
+								var t = index;
+								index = to;
+								to = t;
+							}
+							var t = this.problems[index].order;
+							this.problems[index].order = this.problems[to].order;
+							this.problems[to].order = t;
+							
+							var self = this;
+							var success = 0;
+							var success_fn = function(resp){
+								success++;
+								if(success == 2)
+									self.problems.splice(index, 2, self.problems[to], self.problems[index]);
+							}
+							$.post({
+								url: '/admin/api_problem_set',
+								data: {
+									quiz_id: server.quiz_id,
+									problem_id: this.problems[index].problem_id,
+									order: this.problems[index].order
+								},
+								success: success_fn,
+								dataType: 'json'
+							});
+							$.post({
+								url: '/admin/api_problem_set',
+								data: {
+									quiz_id: server.quiz_id,
+									problem_id: this.problems[to].problem_id,
+									order: this.problems[to].order
+								},
+								success: success_fn,
+								dataType: 'json'
+							});
+						},
 						updateChoice: function(problem){
 							setTimeout(function(){
 								$.post({
@@ -314,11 +353,11 @@ html(lang='en')
 				table.ui.selectable.celled.table.problem-list
 					thead
 						tr
-							//- TODO ลำดับ
 							//- TODO ลบ image_aux
 							th.one.wide(@click="selectAll")
 								button.ui.icon.button
 									i.checkmark.icon
+							th.one.wide ลำดับ
 							th.six.wide รูปคำถาม
 							th.six.wide รูปเพิ่มเติม
 							th.one.wide จำนวนตัวเลือก
@@ -327,11 +366,12 @@ html(lang='en')
 						tr(v-for="(problem, index) in problems")
 							td.selectable.center.aligned(@click="select(problem)")
 								i.large.checkmark.icon(v-show="problem.sel")
-								// .ui.icon.button
-								// 	i.chevron.up.icon
-							// 	p
-							// 		.ui.icon.button
-							// 			i.chevron.down.icon
+							td.order.center.aligned
+								button.ui.small.fluid.icon.button(v-if="index!=0",@click="move(index,-1)")
+										i.chevron.up.icon
+								.order-number {{problem.order}}
+								button.ui.small.fluid.icon.button(v-if="index!=problems.length-1",@click="move(index,1)")
+										i.chevron.down.icon
 							td.images
 								img.zoom(v-if="+problem.image_main",:src="'/admin/image/'+problem.problem_id+(+problem.image_main!=1?'?'+problem.image_main:'')",@click="zoom($event, +problem.problem_id)")
 							td.images
@@ -343,9 +383,10 @@ html(lang='en')
 							td
 								dropdown(:range="+problem.choices",v-model="problem.correct_choice",abc,@change="updateChoice(problem)")
 						tr
-							td
+							td.center.aligned
 								.ui.icon
 									i.big.edit.icon
+							td.center.aligned เพิ่ม
 							td.images
 								.ui.big.circular.icon.button(@click="newImage(0)")
 									i.plus.icon
