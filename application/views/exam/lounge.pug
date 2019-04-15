@@ -9,7 +9,7 @@ html(lang='en')
 		script(src='/static/exam/lounge.js')
 	body
 		nav.ui.fixed.inverted.navbar.menu
-			.item PopQuiz
+			.item= sitename
 			.right.menu
 				.item <?= htmlspecialchars($name) ?>
 				a.item(href='/exam/logout') Logout
