@@ -131,9 +131,10 @@ html(lang='en')
 								}
 							} else
 								out = this.examinee;
-							var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
 							out.sort(function(a,b){
-								return collator.compare(a.aux1,b.aux1);
+								if(a.aux1.length != b.aux1.length)
+									return a.aux1.length-b.aux1.length;
+								return a.aux1.localeCompare(b.aux1);
 							});
 							return out;
 						}
