@@ -4,7 +4,7 @@ config:
     rejectUnauthorized: false
   phases:
     - duration: 1
-      arrivalRate: 100
+      arrivalRate: 300
   defaults:
     gzip: true
   timeout: 5
@@ -17,8 +17,6 @@ config:
       - "token"
       - "aux2"
       - "aux3"
-  plugins:
-    expect: {}
 scenarios:
   - flow:
     - get:
@@ -36,14 +34,6 @@ scenarios:
         followRedirect: false
     - get:
         url: "/exam/lounge"
-        capture:
-          regexp: '<div class="right menu"><div class="item">(.*?)</div>'
-          group: 1
-          as: "nav_name"
-        expect:
-          - equals:
-            - "{{ nav_name }}"
-            - "{{ name }}"
     - get:
         url: "/static/exam/lounge.js"
     - get:
@@ -59,27 +49,19 @@ scenarios:
               - selector: '#large-img img.ui.img'
                 attr: 'src'
                 as: "aux_img"
-            expect:
-              - statusCode: 200
         # - log: "{{ main_img }}, {{ aux_img }}"
         - get:
             url: "/static/exam/problem.js"
         - get:
             url: "{{ main_img }}"
             ifTrue: "main_img"
-            expect:
-              - statusCode: 200
         - get:
             url: "{{ aux_img }}"
             ifTrue: "aux_img"
-            expect:
-              - statusCode: 200
         - post:
             url: "/exam/problem_loaded"
             form: 
               problem: "{{ $loopElement }}"
-            expect:
-              - statusCode: 200
         - think: 5
         - post:
             url: "/exam/problem/{{ $loopElement }}"
