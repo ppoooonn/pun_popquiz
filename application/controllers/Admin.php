@@ -197,8 +197,8 @@ class Admin extends CI_Controller {
 			$num = count($row);
 			if($num === 0)
 				continue;
-			if($num !== 4){
-				show_json_error($this, 'Only 4 column.');
+			if(!($num >= 2 && $num <= 4)){
+				show_json_error($this, '2 to 4 column.');
 				return;
 			}
 			for ($c=0; $c < $num; $c++) {
@@ -225,8 +225,8 @@ class Admin extends CI_Controller {
 				'quiz_id' => $quiz_id,
 				'name' => $row[1],
 				'aux1' => $row[0],
-				'aux2' => $row[2],
-				'aux3' => $row[3],
+				'aux2' => $row[2]??'',
+				'aux3' => $row[3]??'',
 			]);
 		}
 		$this->output
