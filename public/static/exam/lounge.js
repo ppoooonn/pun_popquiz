@@ -5,7 +5,7 @@ $(function(){
 		update();
 	});
 	$('#start_btn').click(function(){
-		window.location.replace('/exam/problem');
+		location.href = ('/exam/problem');
 	});
 	var months_text = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 	var formatDate = function(date){
@@ -42,8 +42,12 @@ $(function(){
 			setTimeout(update,300);
 		} else {
 			if(server.end_time){
-				var msg = 'การสอบจะจบลง';
 				wait = (Date.now()/1000+server.offset) - server.end_time;
+				if(wait > 0){
+					location.href = ('/exam/logout');
+					return;
+				}
+				var msg = 'การสอบจะจบลง';
 				msg += rtime(new Date(server.start_time*1000), wait);
 				$('#timer').text(msg);
 				setTimeout(update,300);
