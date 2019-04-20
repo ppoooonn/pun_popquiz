@@ -173,7 +173,7 @@ class Problem extends CI_Model {
 	public function create($quiz_id, $payload){
 		// TODO: use sql
 		$count = $this->db
-		->select('count(problem_id) as count')
+		->select('max(`order`) as count')
 		->get_where('problems',[
 			'quiz_id' => $quiz_id
 		])->row();

@@ -369,7 +369,7 @@ html(lang='en')
 							td.order.center.aligned
 								button.ui.small.fluid.icon.button(v-if="index!=0",@click="move(index,-1)")
 										i.chevron.up.icon
-								.order-number {{problem.order}}
+								.order-number {{index+1}}
 								button.ui.small.fluid.icon.button(v-if="index!=problems.length-1",@click="move(index,1)")
 										i.chevron.down.icon
 							td.images
