@@ -1,8 +1,7 @@
 $(function(){
 	var ready = false;
 	$('#agree input').change(function(){
-		ready = true;
-		$('#agree').addClass('slide');
+		ready = $(this).prop('checked');
 		update();
 	});
 	$('#start_btn').click(function(){
@@ -37,31 +36,22 @@ $(function(){
 	var update = function(){
 		var wait = server.start_time - (Date.now()/1000+server.offset);
 		if (wait > 0) {
-			var msg;
-			if (ready)
-				msg = 'จะเริ่มสอบ';
-			else
-				msg = 'การสอบจะเริ่ม';
+			var msg = 'การสอบจะเริ่ม';
 			msg += rtime(new Date(server.start_time*1000), wait);
 			$('#timer').text(msg);
 			setTimeout(update,300);
 		} else {
-			if(ready)
-				window.location.replace('/exam/problem');
-			else{
-				if(server.end_time){
-					var msg = 'การสอบจะจบลง';
-					wait = (Date.now()/1000+server.offset) - server.end_time;
-					msg += rtime(new Date(server.start_time*1000), wait);
-					$('#timer').text(msg);
-					setTimeout(update,300);
-				}else{
-					$('#timer').addClass('hide');
-				}
-
-				$('#start_btn').removeClass('hide');
-				$('#agree').addClass('hide');
+			if(server.end_time){
+				var msg = 'การสอบจะจบลง';
+				wait = (Date.now()/1000+server.offset) - server.end_time;
+				msg += rtime(new Date(server.start_time*1000), wait);
+				$('#timer').text(msg);
+				setTimeout(update,300);
+			}else{
+				$('#timer').addClass('hide');
 			}
+
+			$('#start_btn').toggleClass('hide', !ready);
 		}
 	};
 	$('.ui.checkbox').checkbox();

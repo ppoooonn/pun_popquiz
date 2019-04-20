@@ -54,6 +54,7 @@ img.zoom {
 /* lounge */
 .instruction {
 	white-space: pre;
+	white-space: pre-wrap;
 }
 #agree {
 	display: block;
